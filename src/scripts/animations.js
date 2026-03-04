@@ -1,13 +1,17 @@
 /**
  * src/scripts/animations.js
- * Master animation controller — GSAP + ScrollTrigger + Lenis.
- * FIXED: Proper cleanup for View Transitions, corrected horizontal scroll targeting,
- *        robust counter initialization, ticker callback management.
+ * COMPLETE REWRITE — fixes invisible content bug.
+ *
+ * Root cause: gsap.from() sets opacity:0 immediately, but if ScrollTrigger
+ * never fires (scroll position issues with Lenis, timing race conditions),
+ * elements stay invisible forever.
+ *
+ * Fix: Use gsap.fromTo() with explicit start/end states, wrap everything
+ * in try/catch, and ensure elements are always visible if anything fails.
  */
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,25 +20,47 @@ let tickerCallback = null;
 
 /* ━━━ Main Initialization ━━━ */
 export function initAnimations() {
-  cleanup();
+  try {
+    cleanup();
+    initLenis();
 
-  initLenis();
-  initFadeAnimations();
-  initStaggerAnimations();
-  initCounterAnimations();
-  initParallax();
-  initMagneticButtons();
-  initHorizontalScroll();
+    // Mark that GSAP is ready
+    document.documentElement.classList.add('gsap-ready');
 
-  // Give DOM a moment to settle, then refresh
-  requestAnimationFrame(() => {
-    ScrollTrigger.refresh();
+    // Small delay to let DOM fully paint before measuring
+    requestAnimationFrame(() => {
+      try {
+        initFadeAnimations();
+        initStaggerAnimations();
+        initCounterAnimations();
+        initParallax();
+        initMagneticButtons();
+        initHorizontalScroll();
+        ScrollTrigger.refresh();
+      } catch (e) {
+        console.warn('Animation init error:', e);
+        makeEverythingVisible();
+      }
+    });
+  } catch (e) {
+    console.warn('GSAP init error:', e);
+    makeEverythingVisible();
+  }
+}
+
+/* ━━━ Fallback: Force everything visible ━━━ */
+function makeEverythingVisible() {
+  document.querySelectorAll('[data-animate], [data-stagger] > *').forEach((el) => {
+    el.style.opacity = '1';
+    el.style.transform = 'none';
+    el.style.visibility = 'visible';
   });
 }
 
-/* ━━━ Cleanup (called before re-init on View Transitions) ━━━ */
+/* ━━━ Cleanup ━━━ */
 function cleanup() {
   ScrollTrigger.getAll().forEach((st) => st.kill());
+  ScrollTrigger.clearMatchMedia();
 
   if (tickerCallback) {
     gsap.ticker.remove(tickerCallback);
@@ -49,7 +75,30 @@ function cleanup() {
 
 /* ━━━ Lenis Smooth Scroll ━━━ */
 function initLenis() {
-  lenisInstance = new Lenis({
+  // Dynamic import to prevent Lenis from breaking everything if it fails
+  try {
+    const Lenis = window.Lenis || null;
+
+    // If Lenis isn't available as a global, try the module approach
+    if (!Lenis) {
+      import('lenis').then((module) => {
+        const LenisClass = module.default || module.Lenis;
+        setupLenis(LenisClass);
+      }).catch(() => {
+        console.warn('Lenis not available, using native scroll');
+      });
+    } else {
+      setupLenis(Lenis);
+    }
+  } catch (e) {
+    console.warn('Lenis init skipped:', e);
+  }
+}
+
+function setupLenis(LenisClass) {
+  if (!LenisClass) return;
+
+  lenisInstance = new LenisClass({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     touchMultiplier: 2,
@@ -59,7 +108,7 @@ function initLenis() {
   lenisInstance.on('scroll', ScrollTrigger.update);
 
   tickerCallback = (time) => {
-    lenisInstance?.raf(time * 1000);
+    if (lenisInstance) lenisInstance.raf(time * 1000);
   };
 
   gsap.ticker.add(tickerCallback);
@@ -71,32 +120,55 @@ function initFadeAnimations() {
   const elements = document.querySelectorAll('[data-animate]');
 
   elements.forEach((el) => {
+    // Skip elements inside [data-stagger] — those are handled separately
+    if (el.closest('[data-stagger]') && !el.hasAttribute('data-stagger')) return;
+
     const type = el.getAttribute('data-animate');
     const delay = parseFloat(el.getAttribute('data-delay') || '0');
 
-    const fromVars = {
-      opacity: 0,
+    // Build the FROM state
+    const fromState = { opacity: 0 };
+    // Build the TO state
+    const toState = {
+      opacity: 1,
       duration: 0.9,
       delay,
       ease: 'power3.out',
+      clearProps: 'transform',
     };
 
     switch (type) {
-      case 'fade-up':    fromVars.y = 50;       break;
-      case 'fade-down':  fromVars.y = -50;      break;
-      case 'fade-left':  fromVars.x = -50;      break;
-      case 'fade-right': fromVars.x = 50;       break;
-      case 'scale':      fromVars.scale = 0.92;  break;
+      case 'fade-up':
+        fromState.y = 40;
+        toState.y = 0;
+        break;
+      case 'fade-down':
+        fromState.y = -40;
+        toState.y = 0;
+        break;
+      case 'fade-left':
+        fromState.x = -40;
+        toState.x = 0;
+        break;
+      case 'fade-right':
+        fromState.x = 40;
+        toState.x = 0;
+        break;
+      case 'scale':
+        fromState.scale = 0.92;
+        toState.scale = 1;
+        break;
       case 'fade-in':
       default:
         break;
     }
 
-    gsap.from(el, {
-      ...fromVars,
+    gsap.fromTo(el, fromState, {
+      ...toState,
       scrollTrigger: {
         trigger: el,
-        start: 'top 88%',
+        start: 'top 90%',
+        end: 'top 60%',
         toggleActions: 'play none none none',
       },
     });
@@ -108,23 +180,32 @@ function initStaggerAnimations() {
   const parents = document.querySelectorAll('[data-stagger]');
 
   parents.forEach((parent) => {
-    const children = parent.children;
+    const children = Array.from(parent.children);
     if (!children.length) return;
 
     const staggerDelay = parseFloat(parent.getAttribute('data-stagger') || '0.12');
 
-    gsap.from(children, {
-      opacity: 0,
-      y: 40,
-      duration: 0.7,
-      stagger: staggerDelay,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: parent,
-        start: 'top 85%',
-        toggleActions: 'play none none none',
+    gsap.fromTo(
+      children,
+      {
+        opacity: 0,
+        y: 30,
       },
-    });
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.7,
+        stagger: staggerDelay,
+        ease: 'power3.out',
+        clearProps: 'transform',
+        scrollTrigger: {
+          trigger: parent,
+          start: 'top 88%',
+          end: 'top 50%',
+          toggleActions: 'play none none none',
+        },
+      }
+    );
   });
 }
 
@@ -134,13 +215,12 @@ function initCounterAnimations() {
 
   counters.forEach((el) => {
     const target = parseInt(el.getAttribute('data-counter'), 10);
-    if (isNaN(target)) return;
+    if (isNaN(target) || target === 0) return;
 
     const suffix = el.getAttribute('data-suffix') || '';
     const prefix = el.getAttribute('data-prefix') || '';
     const obj = { value: 0 };
 
-    // Set initial display
     el.textContent = prefix + '0' + suffix;
 
     gsap.to(obj, {
@@ -149,7 +229,7 @@ function initCounterAnimations() {
       ease: 'power2.out',
       scrollTrigger: {
         trigger: el,
-        start: 'top 90%',
+        start: 'top 92%',
         toggleActions: 'play none none none',
       },
       onUpdate: () => {
@@ -184,26 +264,26 @@ function initParallax() {
 
 /* ━━━ Magnetic Buttons ━━━ */
 function initMagneticButtons() {
+  // Only on desktop — touch devices don't benefit from magnetic hover
+  if (window.matchMedia('(pointer: coarse)').matches) return;
+
   const buttons = document.querySelectorAll('[data-magnetic]');
 
   buttons.forEach((btn) => {
-    const handleMove = (e) => {
+    btn.addEventListener('mousemove', (e) => {
       const rect = btn.getBoundingClientRect();
       const x = e.clientX - rect.left - rect.width / 2;
       const y = e.clientY - rect.top - rect.height / 2;
       gsap.to(btn, { x: x * 0.25, y: y * 0.25, duration: 0.3, ease: 'power2.out' });
-    };
+    });
 
-    const handleLeave = () => {
+    btn.addEventListener('mouseleave', () => {
       gsap.to(btn, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' });
-    };
-
-    btn.addEventListener('mousemove', handleMove);
-    btn.addEventListener('mouseleave', handleLeave);
+    });
   });
 }
 
-/* ━━━ Horizontal Scroll (Process Section — Desktop Only) ━━━ */
+/* ━━━ Horizontal Scroll (Desktop Only) ━━━ */
 function initHorizontalScroll() {
   const section = document.querySelector('[data-horizontal-scroll]');
   const track = document.querySelector('[data-horizontal-track]');
@@ -211,7 +291,6 @@ function initHorizontalScroll() {
   if (!section || !track) return;
   if (window.innerWidth < 1024) return;
 
-  // Calculate how far the track needs to translate
   const totalScroll = track.scrollWidth - window.innerWidth;
   if (totalScroll <= 0) return;
 

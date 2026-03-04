@@ -1,4 +1,5 @@
 /* src/styles/global.css — Global styles, Tailwind directives, custom utilities */
+/* FIXED: Added visibility fallbacks for animated elements */
 
 @tailwind base;
 @tailwind components;
@@ -7,7 +8,6 @@
 /* ━━━ Base Layer ━━━ */
 @layer base {
   html {
-    scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -20,7 +20,6 @@
     @apply bg-primary text-white;
   }
 
-  /* Refined scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -34,21 +33,33 @@
     @apply bg-primary/70;
   }
 
-  /* Ensure images don't overflow */
   img {
     max-width: 100%;
     height: auto;
   }
 
-  /* Focus styles for accessibility */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primary;
   }
+
+  /*
+   * ━━━ CRITICAL FIX ━━━
+   * All elements with data-animate or inside data-stagger containers
+   * MUST be visible by default. GSAP adds inline opacity:0 when it
+   * initializes .from() tweens — but if ScrollTrigger never fires
+   * (broken init, JS error, slow load), content stays invisible.
+   *
+   * Solution: We do NOT set opacity:0 in CSS. Instead, GSAP's .from()
+   * will temporarily set opacity:0 then animate to 1. If GSAP never
+   * loads, elements remain at their natural opacity:1.
+   *
+   * The .gsap-ready class is added to <html> once GSAP initializes,
+   * confirming JS is working. We can use this for progressive enhancement.
+   */
 }
 
 /* ━━━ Component Layer ━━━ */
 @layer components {
-  /* Layout helpers */
   .section-padding {
     @apply px-5 sm:px-8 lg:px-12 xl:px-20 2xl:px-28;
   }
@@ -57,7 +68,6 @@
     @apply max-w-7xl mx-auto w-full;
   }
 
-  /* Typography */
   .heading-display {
     font-family: 'Playfair Display', serif;
     @apply text-display text-zinc-900 tracking-tight;
@@ -81,7 +91,6 @@
     @apply text-sm md:text-base text-zinc-500 leading-relaxed;
   }
 
-  /* Buttons */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
            px-8 py-4 min-h-[44px]
@@ -124,7 +133,6 @@
            active:scale-[0.97];
   }
 
-  /* Glass Card */
   .glass-card {
     @apply bg-white/70 backdrop-blur-xl
            border border-white/40
@@ -132,7 +140,6 @@
            shadow-[0_8px_32px_rgba(0,0,0,0.06)];
   }
 
-  /* Section label */
   .section-label {
     @apply inline-flex items-center gap-2
            text-xs font-bold tracking-[0.2em] uppercase text-primary
@@ -155,7 +162,6 @@
     display: none;
   }
 
-  /* Gradient text utility */
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-light;
   }

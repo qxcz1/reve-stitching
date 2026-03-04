@@ -1,13 +1,12 @@
 ---
 /**
  * src/pages/products.astro
- * Products — Hero, Product grid (8 items), Fabric portfolio.
- * FIXED: All product images now use Unsplash CDN URLs.
+ * FIXED: Product grid and fabric grid use individual data-animate
+ *        instead of data-stagger (which caused invisible cards).
  */
- import Layout from '../layouts/Layout.astro';
+import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 
-/* FIXED: All image URLs point to real Unsplash photos */
 const products = [
   {
     name: 'Premium Cotton T-Shirts',
@@ -68,36 +67,12 @@ const products = [
 ];
 
 const fabrics = [
-  {
-    name: 'Single Jersey',
-    desc: 'Lightweight, breathable knit perfect for t-shirts and casual wear. Smooth face, soft hand feel.',
-    weight: '120–200 GSM',
-  },
-  {
-    name: 'Double Jersey',
-    desc: 'Thicker, more structured knit ideal for polos and upscale casual garments. Excellent dimensional stability.',
-    weight: '180–300 GSM',
-  },
-  {
-    name: 'Terry Fleece',
-    desc: 'Soft looped interior for warmth — hoodies, sweatshirts, and loungewear. Brushed or unbrushed options.',
-    weight: '240–400 GSM',
-  },
-  {
-    name: 'Lycra Rib',
-    desc: 'Stretchy, form-fitting fabric for activewear, trims, and ladies\' wear. Outstanding recovery and comfort.',
-    weight: '170–280 GSM',
-  },
-  {
-    name: 'Interlock',
-    desc: 'Smooth double-knit structure with excellent drape and stability. Ideal for premium basics.',
-    weight: '160–280 GSM',
-  },
-  {
-    name: 'Moisture Management',
-    desc: 'High-performance wicking fabric for sportswear and athletic lines. Rapid dry technology.',
-    weight: '140–220 GSM',
-  },
+  { name: 'Single Jersey', desc: 'Lightweight, breathable knit perfect for t-shirts and casual wear. Smooth face, soft hand feel.', weight: '120–200 GSM' },
+  { name: 'Double Jersey', desc: 'Thicker, more structured knit ideal for polos and upscale casual garments. Excellent dimensional stability.', weight: '180–300 GSM' },
+  { name: 'Terry Fleece', desc: 'Soft looped interior for warmth — hoodies, sweatshirts, and loungewear. Brushed or unbrushed options.', weight: '240–400 GSM' },
+  { name: 'Lycra Rib', desc: 'Stretchy, form-fitting fabric for activewear, trims, and ladies\' wear. Outstanding recovery and comfort.', weight: '170–280 GSM' },
+  { name: 'Interlock', desc: 'Smooth double-knit structure with excellent drape and stability. Ideal for premium basics.', weight: '160–280 GSM' },
+  { name: 'Moisture Management', desc: 'High-performance wicking fabric for sportswear and athletic lines. Rapid dry technology.', weight: '140–220 GSM' },
 ];
 ---
 
@@ -106,10 +81,9 @@ const fabrics = [
   description="Explore Reve Stitching's range of premium knitted garments — T-Shirts, Polos, Hoodies, Joggers, Ladies' Wear, Kids' Wear, and specialized fabric garments."
 >
 
-  <!-- ━━━━━━ HERO (FIXED: fabric texture uses Unsplash) ━━━━━━ -->
+  <!-- ━━━━━━ HERO ━━━━━━ -->
   <section class="relative py-24 lg:py-32 overflow-hidden" aria-label="Products hero">
     <div class="absolute inset-0 bg-primary-dark"></div>
-    <!-- FIXED: fabric texture now uses Unsplash URL -->
     <div
       class="absolute inset-0 opacity-[0.06]"
       style="background-image: url('https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&w=1920&q=60'); background-size: cover; background-position: center;"
@@ -131,7 +105,7 @@ const fabrics = [
     </div>
   </section>
 
-  <!-- ━━━━━━ PRODUCT GRID ━━━━━━ -->
+  <!-- ━━━━━━ PRODUCT GRID — FIXED: individual animations ━━━━━━ -->
   <section class="py-24 lg:py-32 bg-white" aria-labelledby="products-heading">
     <div class="container-main section-padding">
       <div class="text-center mb-16">
@@ -144,22 +118,25 @@ const fabrics = [
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-stagger="0.08">
+      <!-- FIXED: No data-stagger, each ProductCard wraps in a div with data-animate -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map((product, i) => (
-          <ProductCard
-            name={product.name}
-            image={product.image}
-            rating={product.rating}
-            moq={product.moq}
-            features={product.features}
-            index={i}
-          />
+          <div data-animate="fade-up" data-delay={String(i * 0.08)}>
+            <ProductCard
+              name={product.name}
+              image={product.image}
+              rating={product.rating}
+              moq={product.moq}
+              features={product.features}
+              index={i}
+            />
+          </div>
         ))}
       </div>
     </div>
   </section>
 
-  <!-- ━━━━━━ FABRIC PORTFOLIO ━━━━━━ -->
+  <!-- ━━━━━━ FABRIC PORTFOLIO — FIXED: individual animations ━━━━━━ -->
   <section class="py-24 lg:py-32 bg-surface" aria-labelledby="fabrics-heading">
     <div class="container-main section-padding">
       <div class="text-center mb-16">
@@ -172,9 +149,14 @@ const fabrics = [
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-stagger="0.1">
-        {fabrics.map((fabric) => (
-          <article class="bg-white rounded-2xl border border-zinc-100 p-8 group hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-500">
+      <!-- FIXED: individual data-animate per fabric card -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {fabrics.map((fabric, index) => (
+          <article
+            class="bg-white rounded-2xl border border-zinc-100 p-8 group hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-500"
+            data-animate="fade-up"
+            data-delay={String(index * 0.1)}
+          >
             <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
               <svg class="w-7 h-7 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0L12 17.25 6.43 14.25m11.142 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25"/>

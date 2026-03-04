@@ -1,7 +1,9 @@
 ---
 /**
  * src/components/BentoGrid.astro
- * "Why Choose Us" — 6-card asymmetric bento grid with glassmorphism cards.
+ * "Why Choose Us" — 6-card asymmetric bento grid.
+ * FIXED: Removed data-stagger (caused invisible cards). Each card now
+ *        has its own data-animate with staggered data-delay instead.
  */
 
 const items = [
@@ -45,7 +47,7 @@ const items = [
 ---
 
 <section class="py-24 lg:py-32 relative overflow-hidden" aria-labelledby="why-choose-heading">
-  <!-- Background decoration -->
+  <!-- Background -->
   <div class="absolute inset-0 bg-surface"></div>
   <div class="absolute top-20 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
   <div class="absolute bottom-10 left-0 w-80 h-80 bg-primary-light/5 rounded-full blur-3xl"></div>
@@ -62,10 +64,14 @@ const items = [
       </p>
     </div>
 
-    <!-- Bento Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger="0.1">
-      {items.map((item) => (
-        <article class={`glass-card p-8 lg:p-10 rounded-2xl group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 ${item.span}`}>
+    <!-- Bento Grid — FIXED: each card has individual data-animate + data-delay -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {items.map((item, index) => (
+        <article
+          class={`glass-card p-8 lg:p-10 rounded-2xl group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 ${item.span}`}
+          data-animate="fade-up"
+          data-delay={String(index * 0.1)}
+        >
           <!-- Icon -->
           <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
             {item.icon === 'shield' && (
