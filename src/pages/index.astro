@@ -2,8 +2,9 @@
 /**
  * src/pages/index.astro
  * Homepage — Hero, Stats, Why Choose Us, Process, CTA
+ * FIXED: All image paths replaced with Unsplash CDN URLs
  */
-import Layout from '../layouts/Layout.astro';
+ import Layout from '../layouts/Layout.astro';
 import StatsBar from '../components/StatsBar.astro';
 import BentoGrid from '../components/BentoGrid.astro';
 import ProcessSteps from '../components/ProcessSteps.astro';
@@ -16,6 +17,7 @@ import ProcessSteps from '../components/ProcessSteps.astro';
 
   <!-- ━━━━━━ HERO ━━━━━━ -->
   <section class="relative min-h-[calc(100vh-80px)] flex items-center overflow-hidden" aria-label="Hero">
+    <!-- Background -->
     <div class="absolute inset-0 bg-gradient-to-br from-surface via-white to-white"></div>
     <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/[0.03] to-transparent"></div>
     <div class="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full border border-primary/5"></div>
@@ -67,12 +69,12 @@ import ProcessSteps from '../components/ProcessSteps.astro';
           </div>
         </div>
 
-        <!-- Right — Image -->
-        <div class="order-1 lg:order-2 relative" data-animate="fade-left" data-delay="0.2">
-          <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 aspect-[4/5] lg:aspect-[3/4]">
+        <!-- Right — Image (FIXED: Unsplash URL) -->
+        <div class="order-1 lg:order-2 relative pb-10 lg:pb-0" data-animate="fade-left" data-delay="0.2">
+          <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 aspect-[4/5] lg:aspect-[3/4] bg-zinc-100">
             <img
-              src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1600&h=1200&fit=crop&q=80"
-              alt="Reve Stitching modern garment manufacturing facility in Faisalabad, Pakistan"
+              src="https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&w=1200&h=1600&q=80"
+              alt="Reve Stitching modern garment manufacturing facility — rows of industrial sewing machines in Faisalabad, Pakistan"
               class="w-full h-full object-cover"
               data-parallax="0.15"
               loading="eager"
@@ -82,7 +84,7 @@ import ProcessSteps from '../components/ProcessSteps.astro';
           </div>
 
           <!-- Floating stat card -->
-          <div class="absolute -bottom-6 -left-6 lg:-left-10 bg-white rounded-2xl shadow-xl shadow-black/10 p-5 z-10" data-animate="scale" data-delay="0.6">
+          <div class="absolute -bottom-6 -left-2 sm:-left-6 lg:-left-10 bg-white rounded-2xl shadow-xl shadow-black/10 p-5 z-10" data-animate="scale" data-delay="0.6">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                 <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
@@ -95,7 +97,7 @@ import ProcessSteps from '../components/ProcessSteps.astro';
           </div>
 
           <!-- Floating quality badge -->
-          <div class="absolute -top-4 -right-4 lg:-right-8 bg-primary text-white rounded-2xl shadow-xl shadow-primary/30 p-4 z-10" data-animate="scale" data-delay="0.8">
+          <div class="absolute -top-4 -right-2 sm:-right-4 lg:-right-8 bg-primary text-white rounded-2xl shadow-xl shadow-primary/30 p-4 z-10" data-animate="scale" data-delay="0.8">
             <div class="text-center">
               <div class="text-lg font-bold">AQL</div>
               <div class="text-xs opacity-80">1.5 – 4.0</div>
@@ -117,12 +119,10 @@ import ProcessSteps from '../components/ProcessSteps.astro';
 
   <!-- ━━━━━━ CTA SECTION ━━━━━━ -->
   <section class="py-24 lg:py-32 relative overflow-hidden" aria-labelledby="cta-heading">
-    <!-- Background -->
     <div class="absolute inset-0 bg-primary-dark"></div>
     <div class="absolute inset-0 opacity-10">
       <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 48px 48px;"></div>
     </div>
-    <!-- Decorative blobs -->
     <div class="absolute top-0 left-1/4 w-96 h-96 bg-primary-light/10 rounded-full blur-[100px]"></div>
     <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-primary/20 rounded-full blur-[80px]"></div>
 

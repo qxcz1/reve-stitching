@@ -1,45 +1,53 @@
 ---
 /**
  * src/pages/clients.astro
- * Clients — Global reach, industries served, client logos, certifications.
+ * Clients — Global reach map, industries, client logos, certifications, stats.
+ * FIXED: Client logos display as styled text brands. Certifications visually polished.
  */
-import Layout from '../layouts/Layout.astro';
+ import Layout from '../layouts/Layout.astro';
 
 const clients = [
-  'Boohoo', 'Closure', 'Yours Clothing', 'Pull&Bear',
-  'Forever Club', 'Daisy Street', 'Marshall Artist', 'Threadbare', 'Helme',
+  { name: 'Boohoo', style: 'font-sans font-black text-2xl tracking-tight' },
+  { name: 'CLOSURE', style: 'font-sans font-bold text-xl tracking-[0.25em] uppercase' },
+  { name: 'Yours', style: 'font-serif font-bold text-2xl italic' },
+  { name: 'Pull&Bear', style: 'font-sans font-extrabold text-xl' },
+  { name: 'FOREVER CLUB', style: 'font-sans font-bold text-base tracking-[0.2em] uppercase' },
+  { name: 'Daisy Street', style: 'font-serif font-semibold text-xl' },
+  { name: 'MARSHALL ARTIST', style: 'font-sans font-black text-base tracking-[0.15em] uppercase' },
+  { name: 'Threadbare', style: 'font-sans font-light text-2xl tracking-wide' },
+  { name: 'HELME', style: 'font-sans font-black text-2xl tracking-[0.3em] uppercase' },
 ];
 
 const certifications = [
-  { name: 'BCI', full: 'Better Cotton Initiative' },
-  { name: 'GOTS', full: 'Global Organic Textile Standard' },
-  { name: 'OCS', full: 'Organic Content Standard' },
-  { name: 'SEDEX', full: 'Supplier Ethical Data Exchange' },
-  { name: 'Higg Index', full: 'Sustainable Apparel Coalition' },
-  { name: 'RCS', full: 'Recycled Claim Standard' },
-  { name: 'GRS', full: 'Global Recycled Standard' },
-  { name: 'ISO 9001:2015', full: 'Quality Management Systems' },
+  { name: 'BCI', full: 'Better Cotton Initiative', color: 'bg-emerald-500' },
+  { name: 'GOTS', full: 'Global Organic Textile Standard', color: 'bg-green-600' },
+  { name: 'OCS', full: 'Organic Content Standard', color: 'bg-lime-600' },
+  { name: 'SEDEX', full: 'Supplier Ethical Data Exchange', color: 'bg-teal-600' },
+  { name: 'Higg Index', full: 'Sustainable Apparel Coalition', color: 'bg-cyan-600' },
+  { name: 'RCS', full: 'Recycled Claim Standard', color: 'bg-sky-600' },
+  { name: 'GRS', full: 'Global Recycled Standard', color: 'bg-blue-600' },
+  { name: 'ISO 9001', full: 'Quality Management Systems', color: 'bg-indigo-600' },
 ];
 
 const industries = [
   {
     title: 'International Fashion Brands',
-    desc: 'Fast fashion and premium fashion labels requiring high-volume, trend-driven production.',
+    desc: 'Fast fashion and premium fashion labels requiring high-volume, trend-driven production with rapid turnarounds.',
     icon: 'fashion',
   },
   {
     title: 'Sportswear & Activewear',
-    desc: 'Performance garments with moisture-wicking, stretch, and durability requirements.',
+    desc: 'Performance garments with moisture-wicking, stretch, and durability requirements for athletic brands.',
     icon: 'sport',
   },
   {
     title: "Children's Apparel",
-    desc: 'Safe, skin-friendly kids\' wear manufactured with certified non-toxic dyes and processes.',
+    desc: 'Safe, skin-friendly kids\' wear manufactured with certified non-toxic dyes and gentle processes.',
     icon: 'kids',
   },
   {
     title: 'Corporate Apparel',
-    desc: 'Professional uniforms, polo shirts, and branded workwear for corporate clients.',
+    desc: 'Professional uniforms, polo shirts, and branded workwear for corporate and institutional clients.',
     icon: 'corporate',
   },
 ];
@@ -69,45 +77,60 @@ const industries = [
   <section class="py-24 lg:py-32 bg-white" aria-labelledby="global-heading">
     <div class="container-main section-padding">
       <div class="grid lg:grid-cols-2 gap-16 items-center">
-        <!-- Map Image -->
+        <!-- Map (FIXED: styled SVG with proper appearance) -->
         <div class="relative" data-animate="fade-right">
-          <div class="relative rounded-3xl overflow-hidden bg-surface border border-border p-8">
-            <!-- Simplified SVG world map placeholder -->
-            <div class="aspect-[16/10] flex items-center justify-center">
+          <div class="relative rounded-3xl overflow-hidden bg-surface border border-border p-6 sm:p-8">
+            <div class="aspect-[16/10] flex items-center justify-center relative">
               <svg viewBox="0 0 800 400" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Simplified world outline -->
-                <ellipse cx="400" cy="200" rx="380" ry="180" stroke="#dcfce7" stroke-width="1" fill="none"/>
-                <ellipse cx="400" cy="200" rx="280" ry="130" stroke="#dcfce7" stroke-width="0.5" fill="none" stroke-dasharray="4 4"/>
-                <ellipse cx="400" cy="200" rx="160" ry="75" stroke="#dcfce7" stroke-width="0.5" fill="none" stroke-dasharray="4 4"/>
-                <line x1="20" y1="200" x2="780" y2="200" stroke="#dcfce7" stroke-width="0.5" stroke-dasharray="4 4"/>
-                <line x1="400" y1="20" x2="400" y2="380" stroke="#dcfce7" stroke-width="0.5" stroke-dasharray="4 4"/>
+                <!-- Grid lines -->
+                {[80, 160, 240, 320].map(y => (
+                  <line x1="20" y1={y} x2="780" y2={y} stroke="#dcfce7" stroke-width="0.5" stroke-dasharray="4 4"/>
+                ))}
+                {[100, 200, 300, 400, 500, 600, 700].map(x => (
+                  <line x1={x} y1="20" x2={x} y2="380" stroke="#dcfce7" stroke-width="0.5" stroke-dasharray="4 4"/>
+                ))}
 
-                <!-- Location pins -->
-                <!-- Faisalabad (Origin) -->
-                <circle cx="510" cy="170" r="8" fill="#166534"/>
-                <circle cx="510" cy="170" r="16" fill="#166534" fill-opacity="0.2"/>
-                <circle cx="510" cy="170" r="24" fill="#166534" fill-opacity="0.08"/>
-                <text x="510" y="155" text-anchor="middle" class="text-[10px] fill-primary font-semibold">HQ</text>
-
+                <!-- Simplified continent outlines -->
+                <!-- Europe -->
+                <path d="M320 100 Q340 90 360 95 Q380 85 400 90 L410 100 Q400 120 390 130 Q380 140 360 145 Q340 150 330 140 Q320 130 315 120 Z" fill="#dcfce7" stroke="#bbf7d0" stroke-width="1"/>
                 <!-- UK -->
-                <circle cx="350" cy="130" r="5" fill="#22c55e"/>
-                <circle cx="350" cy="130" r="12" fill="#22c55e" fill-opacity="0.15"/>
+                <ellipse cx="340" cy="110" rx="15" ry="22" fill="#dcfce7" stroke="#bbf7d0" stroke-width="1"/>
+                <!-- Asia / Pakistan region -->
+                <path d="M460 120 Q490 100 530 110 Q560 115 570 140 Q565 170 540 185 Q510 195 485 180 Q460 165 455 145 Z" fill="#dcfce7" stroke="#bbf7d0" stroke-width="1"/>
 
-                <!-- EU -->
-                <circle cx="380" cy="145" r="5" fill="#22c55e"/>
-                <circle cx="380" cy="145" r="12" fill="#22c55e" fill-opacity="0.15"/>
+                <!-- Faisalabad HQ marker (pulsing) -->
+                <circle cx="510" cy="155" r="24" fill="#166534" fill-opacity="0.08">
+                  <animate attributeName="r" values="20;28;20" dur="2.5s" repeatCount="indefinite"/>
+                  <animate attributeName="fill-opacity" values="0.12;0.03;0.12" dur="2.5s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="510" cy="155" r="12" fill="#166534" fill-opacity="0.15"/>
+                <circle cx="510" cy="155" r="6" fill="#166534"/>
+                <text x="510" y="145" text-anchor="middle" font-size="9" font-weight="700" fill="#166534" font-family="Inter, sans-serif">HQ</text>
 
-                <!-- Spain -->
-                <circle cx="345" cy="160" r="5" fill="#22c55e"/>
-                <circle cx="345" cy="160" r="12" fill="#22c55e" fill-opacity="0.15"/>
+                <!-- UK client region -->
+                <circle cx="340" cy="110" r="10" fill="#22c55e" fill-opacity="0.12"/>
+                <circle cx="340" cy="110" r="4" fill="#22c55e"/>
+
+                <!-- Europe client region -->
+                <circle cx="375" cy="125" r="10" fill="#22c55e" fill-opacity="0.12"/>
+                <circle cx="375" cy="125" r="4" fill="#22c55e"/>
+
+                <!-- Spain client region -->
+                <circle cx="335" cy="145" r="10" fill="#22c55e" fill-opacity="0.12"/>
+                <circle cx="335" cy="145" r="4" fill="#22c55e"/>
+
+                <!-- Connection lines (dashed arcs from HQ to clients) -->
+                <path d="M505 155 Q430 80 345 115" stroke="#22c55e" stroke-width="1" stroke-dasharray="4 3" fill="none" opacity="0.4"/>
+                <path d="M505 155 Q440 100 375 125" stroke="#22c55e" stroke-width="1" stroke-dasharray="4 3" fill="none" opacity="0.4"/>
+                <path d="M505 155 Q425 110 340 145" stroke="#22c55e" stroke-width="1" stroke-dasharray="4 3" fill="none" opacity="0.4"/>
               </svg>
             </div>
 
             <!-- Legend -->
-            <div class="flex items-center justify-center gap-6 mt-4">
+            <div class="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border">
               <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-primary"></div>
-                <span class="text-xs text-zinc-500 font-medium">Headquarters</span>
+                <span class="text-xs text-zinc-500 font-medium">Headquarters — Faisalabad</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-primary-light"></div>
@@ -185,7 +208,7 @@ const industries = [
     </div>
   </section>
 
-  <!-- ━━━━━━ CLIENT LOGOS ━━━━━━ -->
+  <!-- ━━━━━━ CLIENT LOGOS (FIXED: styled as branded text logos) ━━━━━━ -->
   <section class="py-24 lg:py-32 bg-white" aria-labelledby="logos-heading">
     <div class="container-main section-padding">
       <div class="text-center mb-16">
@@ -195,23 +218,23 @@ const industries = [
         </h2>
       </div>
 
+      <!-- FIXED: Each client is styled with unique typography to look like a real brand logo -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" data-stagger="0.06">
         {clients.map((client) => (
-          <div class="bg-surface rounded-2xl border border-border p-8 flex items-center justify-center aspect-[3/2] group hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-500">
-            <span class="text-lg font-bold text-zinc-400 group-hover:text-primary transition-colors duration-300 text-center">
-              {client}
+          <div class="bg-zinc-50 rounded-2xl border border-zinc-100 p-6 sm:p-8 flex items-center justify-center aspect-[3/2] group hover:border-primary/30 hover:bg-white hover:shadow-lg hover:shadow-primary/5 transition-all duration-500">
+            <span class:list={[
+              'text-zinc-400 group-hover:text-zinc-700 transition-colors duration-300 text-center select-none leading-tight',
+              client.style,
+            ]}>
+              {client.name}
             </span>
           </div>
         ))}
       </div>
-
-      <p class="text-center text-sm text-zinc-400 mt-8" data-animate="fade-up">
-        Replace these text placeholders with your client logos at <code class="text-xs bg-zinc-100 px-2 py-0.5 rounded">/public/images/clients/</code>
-      </p>
     </div>
   </section>
 
-  <!-- ━━━━━━ CERTIFICATIONS ━━━━━━ -->
+  <!-- ━━━━━━ CERTIFICATIONS (FIXED: visual badge icons) ━━━━━━ -->
   <section class="py-24 lg:py-32 bg-primary-dark relative overflow-hidden" aria-labelledby="certs-heading">
     <div class="absolute inset-0 opacity-5">
       <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
@@ -234,9 +257,12 @@ const industries = [
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" data-stagger="0.08">
         {certifications.map((cert) => (
-          <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 hover:border-white/20 transition-all duration-300">
-            <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-              <svg class="w-7 h-7 text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 hover:border-white/20 transition-all duration-300 group">
+            <!-- FIXED: distinct colored icon circle for each cert -->
+            <div class={`w-14 h-14 rounded-full ${cert.color} bg-opacity-20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
+              <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
+              </svg>
             </div>
             <div class="text-lg font-bold text-white mb-1">{cert.name}</div>
             <p class="text-xs text-green-100/50">{cert.full}</p>
@@ -257,7 +283,11 @@ const industries = [
           { value: 8, suffix: '', label: 'Certifications' },
         ].map((stat) => (
           <div>
-            <div class="text-4xl lg:text-5xl font-bold text-primary mb-2" data-counter={stat.value} data-suffix={stat.suffix}>
+            <div
+              class="text-4xl lg:text-5xl font-bold text-primary mb-2"
+              data-counter={stat.value}
+              data-suffix={stat.suffix}
+            >
               {stat.value.toLocaleString()}{stat.suffix}
             </div>
             <div class="text-sm text-zinc-500 font-medium uppercase tracking-wider">{stat.label}</div>

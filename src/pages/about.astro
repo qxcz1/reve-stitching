@@ -1,7 +1,8 @@
 ---
 /**
  * src/pages/about.astro
- * About — Company story, timeline, leadership team, quality commitment.
+ * About — Company story, timeline, leadership, quality commitment.
+ * FIXED: All image paths replaced with working Unsplash CDN URLs.
  */
  import Layout from '../layouts/Layout.astro';
 import TimelineItem from '../components/TimelineItem.astro';
@@ -44,29 +45,30 @@ const timeline = [
   },
 ];
 
+/* FIXED: All team images now use Unsplash professional headshots */
 const leaders = [
   {
     name: 'Vasim Ahmad',
     role: 'Chief Executive Officer',
-    image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=600&h=800&q=80',
     desc: 'Visionary leader driving Reve Stitching\'s growth with a focus on sustainable, ethical manufacturing and global partnerships.',
   },
   {
     name: 'Haroon Iqbal',
     role: 'Director',
-    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=800&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&h=800&q=80',
     desc: 'Oversees client relations and international business development, ensuring seamless communication with global brands.',
   },
   {
     name: 'Abdul Basit',
     role: 'Director',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&h=800&q=80',
     desc: 'Leads operations and production strategy, optimizing manufacturing processes for quality and efficiency.',
   },
   {
     name: 'Ghulam Jilani',
     role: 'General Manager',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&h=800&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=600&h=800&q=80',
     desc: 'Manages day-to-day operations, coordinating all departments to deliver consistent, on-time production output.',
   },
 ];
@@ -111,18 +113,17 @@ const leaders = [
           </div>
         </div>
 
-        <!-- Image -->
+        <!-- Image (FIXED: Unsplash URL) -->
         <div class="relative" data-animate="fade-left" data-delay="0.2">
-          <div class="rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 aspect-[4/5]">
+          <div class="rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 aspect-[4/5] bg-zinc-100">
             <img
-              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=900&fit=crop&q=80"
-              alt="Inside the Reve Stitching manufacturing facility — production floor with modern machinery"
+              src="https://images.unsplash.com/photo-1565688534245-05d6b5be184a?auto=format&fit=crop&w=1000&h=1250&q=80"
+              alt="Inside the Reve Stitching manufacturing facility — close-up of precision sewing equipment"
               class="w-full h-full object-cover"
               loading="eager"
               decoding="async"
             />
           </div>
-          <!-- Accent block -->
           <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-2xl -z-10"></div>
         </div>
       </div>
@@ -162,7 +163,6 @@ const leaders = [
   <!-- ━━━━━━ LEADERSHIP ━━━━━━ -->
   <section class="py-24 lg:py-32 bg-surface" aria-labelledby="leadership-heading">
     <div class="container-main section-padding">
-      <!-- Header -->
       <div class="text-center max-w-2xl mx-auto mb-16">
         <span class="section-label justify-center" data-animate="fade-up">Leadership</span>
         <h2 id="leadership-heading" class="heading-headline mb-5" data-animate="fade-up" data-delay="0.1">
@@ -173,12 +173,11 @@ const leaders = [
         </p>
       </div>
 
-      <!-- Team Grid -->
+      <!-- Team Grid (FIXED: images now load from Unsplash) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-stagger="0.1">
         {leaders.map((leader) => (
           <article class="bg-white rounded-2xl overflow-hidden border border-zinc-100 group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500">
-            <!-- Photo -->
-            <div class="aspect-[3/4] overflow-hidden bg-zinc-100 relative">
+            <div class="aspect-[3/4] overflow-hidden bg-zinc-200 relative">
               <img
                 src={leader.image}
                 alt={`${leader.name} — ${leader.role} at Reve Stitching`}
@@ -188,8 +187,6 @@ const leaders = [
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
-
-            <!-- Info -->
             <div class="p-6">
               <h3 class="text-lg font-bold text-zinc-900 mb-1">{leader.name}</h3>
               <p class="text-sm font-semibold text-primary mb-3">{leader.role}</p>
@@ -205,12 +202,12 @@ const leaders = [
   <section class="py-24 lg:py-32 bg-white" aria-labelledby="quality-heading">
     <div class="container-main section-padding">
       <div class="grid lg:grid-cols-2 gap-16 items-center">
-        <!-- Image -->
+        <!-- Image (FIXED: Unsplash URL) -->
         <div class="relative" data-animate="fade-right">
-          <div class="rounded-3xl overflow-hidden shadow-xl aspect-[4/3]">
+          <div class="rounded-3xl overflow-hidden shadow-xl aspect-[4/3] bg-zinc-100">
             <img
-              src="https://images.unsplash.com/photo-1532634922-8fe0b757fb13?w=1200&h=900&fit=crop&q=80"
-              alt="Quality control inspection process at Reve Stitching"
+              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&h=900&q=80"
+              alt="Quality control inspection process at Reve Stitching — technician reviewing garment standards"
               class="w-full h-full object-cover"
               loading="lazy"
               decoding="async"

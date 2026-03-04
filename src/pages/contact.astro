@@ -1,15 +1,16 @@
 ---
 /**
  * src/pages/contact.astro
- * Contact — Form, team cards, FAQ accordion, map placeholder.
+ * Contact — Form, team cards, FAQ accordion, embedded map.
+ * FIXED: Team photos use Unsplash, map uses OpenStreetMap embed.
  */
-import Layout from '../layouts/Layout.astro';
+ import Layout from '../layouts/Layout.astro';
 import FAQ from '../components/FAQ.astro';
 
 const faqs = [
   {
     question: 'What is your minimum order quantity (MOQ)?',
-    answer: 'Our standard MOQ varies by product type, typically ranging from 200-500 pieces per style/color. For initial trial orders, we can be flexible to accommodate new partnerships. Please contact us to discuss your specific requirements.',
+    answer: 'Our standard MOQ varies by product type, typically ranging from 200–500 pieces per style/color. For initial trial orders, we can be flexible to accommodate new partnerships. Contact us to discuss your specific requirements.',
   },
   {
     question: 'What quality standards do you maintain?',
@@ -21,7 +22,7 @@ const faqs = [
   },
   {
     question: 'What is your production lead time?',
-    answer: 'Standard production lead time is 30-45 days from order confirmation, depending on order size, complexity, and fabric availability. Rush orders can be accommodated on a case-by-case basis. We also provide a detailed production timeline before order confirmation.',
+    answer: 'Standard production lead time is 30–45 days from order confirmation, depending on order size, complexity, and fabric availability. Rush orders can be accommodated on a case-by-case basis. We provide a detailed production timeline before order confirmation.',
   },
   {
     question: 'What fabric types do you work with?',
@@ -29,7 +30,7 @@ const faqs = [
   },
   {
     question: 'Do you provide samples before bulk production?',
-    answer: 'Absolutely. We provide pre-production samples for client approval before commencing bulk production. Sample development typically takes 7-10 business days. We cover up to two rounds of revisions at no additional cost to ensure the sample meets your exact specifications.',
+    answer: 'Absolutely. We provide pre-production samples for client approval before commencing bulk manufacturing. Sample development typically takes 7–10 business days. We cover up to two rounds of revisions at no additional cost.',
   },
 ];
 
@@ -39,14 +40,14 @@ const teamContacts = [
     role: 'Director — Client Relations',
     email: 'haroon@revestitching.com',
     phone: '+92 XXX XXXXXXX',
-    image: '/images/team/director-haroon.jpg',
+    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&h=300&q=80',
   },
   {
     name: 'Abdul Basit',
     role: 'Director — Operations',
     email: 'abdul.basit@revestitching.com',
     phone: '+92 XXX XXXXXXX',
-    image: '/images/team/director-basit.jpg',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&h=300&q=80',
   },
 ];
 ---
@@ -85,105 +86,58 @@ const teamContacts = [
             <div class="grid sm:grid-cols-2 gap-6">
               <div>
                 <label for="name" class="block text-sm font-semibold text-zinc-700 mb-2">Full Name *</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  placeholder="Your name"
-                  class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
-                />
+                <input type="text" id="name" name="name" required placeholder="Your name" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" />
               </div>
               <div>
                 <label for="company" class="block text-sm font-semibold text-zinc-700 mb-2">Company Name *</label>
-                <input
-                  type="text"
-                  id="company"
-                  name="company"
-                  required
-                  placeholder="Your company"
-                  class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
-                />
+                <input type="text" id="company" name="company" required placeholder="Your company" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" />
               </div>
             </div>
 
             <div class="grid sm:grid-cols-2 gap-6">
               <div>
                 <label for="email" class="block text-sm font-semibold text-zinc-700 mb-2">Email Address *</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  placeholder="you@company.com"
-                  class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
-                />
+                <input type="email" id="email" name="email" required placeholder="you@company.com" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" />
               </div>
               <div>
                 <label for="phone" class="block text-sm font-semibold text-zinc-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  placeholder="+1 (555) 000-0000"
-                  class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
-                />
+                <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" />
               </div>
             </div>
 
             <div>
               <label for="product" class="block text-sm font-semibold text-zinc-700 mb-2">Product Interest</label>
-              <select
-                id="product"
-                name="product"
-                class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white text-zinc-600 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none appearance-none"
-              >
-                <option value="">Select a product category</option>
-                <option value="tshirts">Premium Cotton T-Shirts</option>
-                <option value="polos">Corporate Polo Shirts</option>
-                <option value="hoodies">Premium Hoodies</option>
-                <option value="joggers">Athletic Joggers</option>
-                <option value="sweatshirts">Sweatshirts</option>
-                <option value="ladies">Ladies' Wear</option>
-                <option value="kids">Kids' Wear</option>
-                <option value="specialized">Specialized Fabric Garments</option>
-                <option value="other">Other / Custom</option>
-              </select>
+              <div class="relative">
+                <select id="product" name="product" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white text-zinc-600 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none appearance-none pr-10">
+                  <option value="">Select a product category</option>
+                  <option value="tshirts">Premium Cotton T-Shirts</option>
+                  <option value="polos">Corporate Polo Shirts</option>
+                  <option value="hoodies">Premium Hoodies</option>
+                  <option value="joggers">Athletic Joggers</option>
+                  <option value="sweatshirts">Sweatshirts</option>
+                  <option value="ladies">Ladies' Wear</option>
+                  <option value="kids">Kids' Wear</option>
+                  <option value="specialized">Specialized Fabric Garments</option>
+                  <option value="other">Other / Custom</option>
+                </select>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+              </div>
             </div>
 
             <div class="grid sm:grid-cols-2 gap-6">
               <div>
                 <label for="moq" class="block text-sm font-semibold text-zinc-700 mb-2">Estimated Quantity</label>
-                <input
-                  type="text"
-                  id="moq"
-                  name="moq"
-                  placeholder="e.g., 5,000 units"
-                  class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
-                />
+                <input type="text" id="moq" name="moq" placeholder="e.g., 5,000 units" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" />
               </div>
               <div>
                 <label for="timeline" class="block text-sm font-semibold text-zinc-700 mb-2">Target Timeline</label>
-                <input
-                  type="text"
-                  id="timeline"
-                  name="timeline"
-                  placeholder="e.g., 6 weeks"
-                  class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
-                />
+                <input type="text" id="timeline" name="timeline" placeholder="e.g., 6 weeks" class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" />
               </div>
             </div>
 
             <div>
               <label for="message" class="block text-sm font-semibold text-zinc-700 mb-2">Message *</label>
-              <textarea
-                id="message"
-                name="message"
-                rows="5"
-                required
-                placeholder="Tell us about your project requirements, fabric preferences, customization needs..."
-                class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none resize-y"
-              ></textarea>
+              <textarea id="message" name="message" rows="5" required placeholder="Tell us about your project requirements, fabric preferences, customization needs..." class="w-full px-4 py-3.5 border border-zinc-200 rounded-xl text-sm bg-white placeholder-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none resize-y"></textarea>
             </div>
 
             <button type="submit" class="btn-primary w-full sm:w-auto" data-magnetic>
@@ -231,14 +185,14 @@ const teamContacts = [
             </ul>
           </div>
 
-          <!-- Team Contact Cards -->
+          <!-- Team Contact Cards (FIXED: photos now load) -->
           {teamContacts.map((person) => (
             <div class="bg-white rounded-2xl p-6 border border-zinc-100 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
               <div class="flex items-center gap-4 mb-4">
-                <div class="w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 shrink-0">
+                <div class="w-14 h-14 rounded-xl overflow-hidden bg-zinc-200 shrink-0">
                   <img
                     src={person.image}
-                    alt={person.name}
+                    alt={`${person.name} — ${person.role}`}
                     class="w-full h-full object-cover"
                     loading="lazy"
                     decoding="async"
@@ -266,22 +220,26 @@ const teamContacts = [
     </div>
   </section>
 
-  <!-- ━━━━━━ MAP PLACEHOLDER ━━━━━━ -->
+  <!-- ━━━━━━ MAP (FIXED: real OpenStreetMap embed) ━━━━━━ -->
   <section class="bg-zinc-100" aria-label="Location map">
     <div class="w-full h-[400px] relative overflow-hidden">
-      <!-- Replace with a real Google Maps embed or Mapbox -->
-      <div class="absolute inset-0 bg-surface flex items-center justify-center">
-        <div class="text-center">
-          <svg class="w-16 h-16 text-primary/20 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
-          </svg>
-          <p class="text-sm text-zinc-400 font-medium">
-            Google Maps Embed — Chak No. 196/R.B, Ghona Road, Faisalabad
-          </p>
-          <p class="text-xs text-zinc-300 mt-1">
-            Replace this div with an <code>&lt;iframe&gt;</code> from Google Maps
-          </p>
+      <iframe
+        src="https://www.openstreetmap.org/export/embed.html?bbox=73.0%2C31.3%2C73.2%2C31.5&layer=mapnik&marker=31.4181%2C73.0776"
+        class="w-full h-full border-0"
+        loading="lazy"
+        title="Reve Stitching location — Faisalabad, Pakistan"
+        allowfullscreen
+      ></iframe>
+      <!-- Fallback overlay with address -->
+      <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-zinc-800">Reve Stitching</p>
+            <p class="text-[11px] text-zinc-500">Ghona Road, Faisalabad, Pakistan</p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,12 +1,13 @@
 ---
 /**
  * src/components/ProcessSteps.astro
- * 14-step horizontal scroll section.
- * Desktop: GSAP ScrollTrigger pinned horizontal scroll
- * Mobile: native horizontal overflow with snap
+ * 14-step manufacturing process with horizontal scroll.
+ * FIXED: Correct DOM structure for GSAP ScrollTrigger pin + horizontal translate.
+ *        Desktop: pinned section, track translates left on scroll.
+ *        Mobile: native horizontal overflow with snap.
  */
 
-const steps = [
+ const steps = [
   { num: '01', title: 'Product Design', desc: 'Conceptualizing garment specifications and style details' },
   { num: '02', title: 'Fabric Selection & Inspection', desc: 'Choosing and quality-checking raw materials' },
   { num: '03', title: 'Pattern Making', desc: 'Creating precise templates for every size' },
@@ -24,55 +25,83 @@ const steps = [
 ];
 ---
 
+<!-- Mobile: standard section with horizontal overflow -->
+<section class="lg:hidden py-24 bg-white" aria-labelledby="process-heading-mobile">
+  <div class="section-padding container-main mb-10" data-animate="fade-up">
+    <span class="section-label">Our Process</span>
+    <h2 id="process-heading-mobile" class="heading-headline mb-4">
+      14 Steps to <span class="text-gradient">Perfection</span>
+    </h2>
+    <p class="text-body max-w-md">
+      Every garment passes through our meticulous 14-step production pipeline.
+    </p>
+  </div>
+
+  <div class="overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+    <div class="flex gap-4 px-5 sm:px-8 pb-6 w-max">
+      {steps.map((step, i) => (
+        <article class="snap-start flex-shrink-0 w-[250px] bg-surface border border-border rounded-2xl p-6 group hover:bg-primary hover:border-primary transition-all duration-500">
+          <span class="block font-serif text-4xl font-bold text-primary/20 group-hover:text-white/20 transition-colors duration-500 mb-4">
+            {step.num}
+          </span>
+          <div class="h-px bg-border group-hover:bg-white/20 mb-4 transition-colors duration-500"></div>
+          <h3 class="text-base font-bold text-zinc-900 group-hover:text-white mb-2 transition-colors duration-500 leading-snug">
+            {step.title}
+          </h3>
+          <p class="text-sm text-zinc-500 group-hover:text-green-100 transition-colors duration-500 leading-relaxed">
+            {step.desc}
+          </p>
+          {i === steps.length - 1 && (
+            <div class="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary group-hover:text-white uppercase tracking-wider">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Complete
+            </div>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Desktop: GSAP pinned horizontal scroll -->
 <section
-  class="py-24 lg:py-0 bg-white relative"
+  class="hidden lg:block relative bg-white"
   data-horizontal-scroll
-  aria-labelledby="process-heading"
+  aria-labelledby="process-heading-desktop"
 >
-  <!-- Desktop: pin wrapper (min-height handled by GSAP) -->
-  <div class="lg:h-screen lg:flex lg:flex-col lg:justify-center overflow-hidden">
-    <!-- Header (always visible) -->
-    <div class="section-padding container-main mb-10 lg:mb-8 lg:pt-16" data-animate="fade-up">
+  <div class="h-screen flex flex-col justify-center overflow-hidden">
+    <!-- Header -->
+    <div class="section-padding container-main mb-8 pt-8 shrink-0" data-animate="fade-up">
       <span class="section-label">Our Process</span>
-      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <h2 id="process-heading" class="heading-headline">
-          14 Steps to<br class="hidden md:block" />
+      <div class="flex items-end justify-between gap-4">
+        <h2 id="process-heading-desktop" class="heading-headline">
+          14 Steps to<br/>
           <span class="text-gradient">Perfection</span>
         </h2>
-        <p class="text-body max-w-md">
+        <p class="text-body max-w-md text-right">
           Every garment passes through our meticulous 14-step production pipeline, ensuring quality at every stage.
         </p>
       </div>
     </div>
 
-    <!-- Horizontal Track -->
-    <div
-      class="overflow-x-auto lg:overflow-visible scrollbar-hide snap-x snap-mandatory"
-      data-horizontal-track
-    >
-      <div class="flex gap-5 px-5 sm:px-8 lg:px-12 xl:px-20 2xl:px-28 pb-6 lg:pb-0 w-max">
+    <!-- Horizontal Track — this element gets translated by GSAP -->
+    <div class="flex-1 flex items-center overflow-hidden">
+      <div
+        class="flex gap-5 pl-5 sm:pl-8 lg:pl-12 xl:pl-20 2xl:pl-28 pr-[30vw]"
+        data-horizontal-track
+      >
         {steps.map((step, i) => (
-          <article
-            class="snap-start flex-shrink-0 w-[260px] lg:w-[280px] bg-surface border border-border rounded-2xl p-6 group hover:bg-primary hover:border-primary transition-all duration-500 cursor-default"
-          >
-            <!-- Step Number -->
+          <article class="flex-shrink-0 w-[280px] bg-surface border border-border rounded-2xl p-6 group hover:bg-primary hover:border-primary transition-all duration-500 cursor-default">
             <span class="block font-serif text-4xl font-bold text-primary/20 group-hover:text-white/20 transition-colors duration-500 mb-4">
               {step.num}
             </span>
-
-            <!-- Connector line -->
             <div class="h-px bg-border group-hover:bg-white/20 mb-4 transition-colors duration-500"></div>
-
-            <!-- Title -->
             <h3 class="text-base font-bold text-zinc-900 group-hover:text-white mb-2 transition-colors duration-500 leading-snug">
               {step.title}
             </h3>
-
-            <!-- Description -->
             <p class="text-sm text-zinc-500 group-hover:text-green-100 transition-colors duration-500 leading-relaxed">
               {step.desc}
             </p>
-
             {i === steps.length - 1 && (
               <div class="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary group-hover:text-white uppercase tracking-wider">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
