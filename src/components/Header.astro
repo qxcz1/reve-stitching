@@ -30,17 +30,17 @@ function isActive(href: string): boolean {
     <div class="flex items-center justify-between h-20 lg:h-[72px]">
 
       <!-- ━━━ Logo ━━━ -->
-      <a href="/" class="flex items-center gap-2.5 group" aria-label="Reve Stitching — Home">
-        <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-white">
-            <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div class="leading-none">
-          <span class="font-serif font-bold text-xl text-zinc-900">Reve</span>
-          <span class="font-serif font-bold text-xl text-primary ml-0.5">Stitching</span>
-        </div>
-      </a>
+<a href="/" class="flex items-center gap-2.5 group" aria-label="Reve Stitching — Home">
+  <img 
+    src="/images/icon.png" 
+    alt="" 
+    class="w-12 h-12 rounded-lg transition-transform duration-300 group-hover:scale-105"
+  />
+  <div class="leading-none">
+    <span class="font-serif font-bold text-xl text-zinc-900">Reve</span>
+    <span class="font-serif font-bold text-xl text-primary ml-0.5">Stitching</span>
+  </div>
+</a>
 
       <!-- ━━━ Desktop Navigation ━━━ -->
       <nav class="hidden lg:flex items-center gap-1" aria-label="Main navigation">
