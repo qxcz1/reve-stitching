@@ -149,7 +149,7 @@ npm run dev
 
 📧 **Email:** [info@revestitching.com](mailto:info@revestitching.com)
 
-🌐 **Website:** [revestitchingpvt.com](https://revestitching.com)
+🌐 **Website:** [revestitching.com](https://revestitching.com)
 
 ---
 
