@@ -220,30 +220,37 @@ const teamContacts = [
     </div>
   </section>
 
-  <!-- ━━━━━━ MAP (FIXED: real OpenStreetMap embed) ━━━━━━ -->
-  <section class="bg-zinc-100" aria-label="Location map">
-    <div class="w-full h-[400px] relative overflow-hidden">
-      <iframe
-        src="https://www.openstreetmap.org/export/embed.html?bbox=73.0%2C31.3%2C73.2%2C31.5&layer=mapnik&marker=31.4181%2C73.0776"
-        class="w-full h-full border-0"
-        loading="lazy"
-        title="Reve Stitching location — Faisalabad, Pakistan"
-        allowfullscreen
-      ></iframe>
-      <!-- Fallback overlay with address -->
-      <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg z-10">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-          </div>
-          <div>
-            <p class="text-xs font-bold text-zinc-800">Reve Stitching</p>
-            <p class="text-[11px] text-zinc-500">Ghona Road, Faisalabad, Pakistan</p>
-          </div>
+  <!-- ━━━━━━ MAP (UPDATED: Google Maps Embed) ━━━━━━ -->
+<section class="bg-zinc-100" aria-label="Location map">
+  <div class="w-full h-[400px] relative overflow-hidden">
+    <iframe 
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3402.122391468285!2d73.12971499999999!3d31.493319499999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x392269001a5a2fbd%3A0x93127fce8d1b48ce!2sReve%20Stitching!5e0!3m2!1sen!2s!4v1772653770436!5m2!1sen!2s" 
+      class="w-full h-full border-0" 
+      allowfullscreen="" 
+      loading="lazy" 
+      referrerpolicy="no-referrer-when-downgrade"
+      title="Reve Stitching location — Faisalabad, Pakistan"
+    ></iframe>
+
+    <!-- Overlay Card (Preserved) -->
+    <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg z-10">
+      <div class="flex items-center gap-3">
+        <!-- Icon Box -->
+        <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+          <svg class="w-4 h-4 text-zinc-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+          </svg>
+        </div>
+        <!-- Text Content -->
+        <div>
+          <p class="text-xs font-bold text-zinc-800">Reve Stitching</p>
+          <p class="text-[11px] text-zinc-500">Ghona Road, Faisalabad, Pakistan</p>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- ━━━━━━ FAQ ━━━━━━ -->
   <section class="py-24 lg:py-32 bg-white" aria-labelledby="faq-heading">
