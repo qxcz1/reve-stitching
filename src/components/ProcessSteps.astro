@@ -1,0 +1,87 @@
+---
+/**
+ * src/components/ProcessSteps.astro
+ * 14-step horizontal scroll section.
+ * Desktop: GSAP ScrollTrigger pinned horizontal scroll
+ * Mobile: native horizontal overflow with snap
+ */
+
+const steps = [
+  { num: '01', title: 'Product Design', desc: 'Conceptualizing garment specifications and style details' },
+  { num: '02', title: 'Fabric Selection & Inspection', desc: 'Choosing and quality-checking raw materials' },
+  { num: '03', title: 'Pattern Making', desc: 'Creating precise templates for every size' },
+  { num: '04', title: 'Grading', desc: 'Adjusting patterns across the full size range' },
+  { num: '05', title: 'Marking', desc: 'Planning optimal fabric layout for efficiency' },
+  { num: '06', title: 'Spreading', desc: 'Layering fabric for consistent, efficient cutting' },
+  { num: '07', title: 'Cutting', desc: 'Precision cutting using modern equipment' },
+  { num: '08', title: 'Bundling', desc: 'Organizing cut pieces by style and size' },
+  { num: '09', title: 'Sewing', desc: 'Expert assembly on 150+ modern machines' },
+  { num: '10', title: 'Embroidery Process', desc: 'Adding decorative elements and branding' },
+  { num: '11', title: 'Pressing & Folding', desc: 'Professional finishing for presentation' },
+  { num: '12', title: 'Finishing & Detailing', desc: 'Final touches and trim attachment' },
+  { num: '13', title: 'Quality Control', desc: 'Multi-point AQL 1.5-4.0 inspection' },
+  { num: '14', title: 'Finished Garment', desc: 'Export-ready packaged product' },
+];
+---
+
+<section
+  class="py-24 lg:py-0 bg-white relative"
+  data-horizontal-scroll
+  aria-labelledby="process-heading"
+>
+  <!-- Desktop: pin wrapper (min-height handled by GSAP) -->
+  <div class="lg:h-screen lg:flex lg:flex-col lg:justify-center overflow-hidden">
+    <!-- Header (always visible) -->
+    <div class="section-padding container-main mb-10 lg:mb-8 lg:pt-16" data-animate="fade-up">
+      <span class="section-label">Our Process</span>
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <h2 id="process-heading" class="heading-headline">
+          14 Steps to<br class="hidden md:block" />
+          <span class="text-gradient">Perfection</span>
+        </h2>
+        <p class="text-body max-w-md">
+          Every garment passes through our meticulous 14-step production pipeline, ensuring quality at every stage.
+        </p>
+      </div>
+    </div>
+
+    <!-- Horizontal Track -->
+    <div
+      class="overflow-x-auto lg:overflow-visible scrollbar-hide snap-x snap-mandatory"
+      data-horizontal-track
+    >
+      <div class="flex gap-5 px-5 sm:px-8 lg:px-12 xl:px-20 2xl:px-28 pb-6 lg:pb-0 w-max">
+        {steps.map((step, i) => (
+          <article
+            class="snap-start flex-shrink-0 w-[260px] lg:w-[280px] bg-surface border border-border rounded-2xl p-6 group hover:bg-primary hover:border-primary transition-all duration-500 cursor-default"
+          >
+            <!-- Step Number -->
+            <span class="block font-serif text-4xl font-bold text-primary/20 group-hover:text-white/20 transition-colors duration-500 mb-4">
+              {step.num}
+            </span>
+
+            <!-- Connector line -->
+            <div class="h-px bg-border group-hover:bg-white/20 mb-4 transition-colors duration-500"></div>
+
+            <!-- Title -->
+            <h3 class="text-base font-bold text-zinc-900 group-hover:text-white mb-2 transition-colors duration-500 leading-snug">
+              {step.title}
+            </h3>
+
+            <!-- Description -->
+            <p class="text-sm text-zinc-500 group-hover:text-green-100 transition-colors duration-500 leading-relaxed">
+              {step.desc}
+            </p>
+
+            {i === steps.length - 1 && (
+              <div class="mt-4 inline-flex items-center gap-1 text-xs font-bold text-primary group-hover:text-white uppercase tracking-wider">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Complete
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

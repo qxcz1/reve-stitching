@@ -1,0 +1,106 @@
+---
+/**
+ * src/components/FAQ.astro
+ * Accessible accordion component. Each item toggles open/close.
+ */
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  items: FAQItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="space-y-3" data-faq-container>
+  {items.map((item, i) => (
+    <div
+      class="border border-zinc-200 rounded-xl overflow-hidden transition-colors duration-300 hover:border-primary/30"
+      data-faq-item
+      data-animate="fade-up"
+      data-delay={String(i * 0.06)}
+    >
+      <button
+        class="w-full flex items-center justify-between p-6 text-left gap-4 group"
+        aria-expanded="false"
+        data-faq-trigger
+      >
+        <span class="text-base font-semibold text-zinc-800 group-hover:text-primary transition-colors duration-200">
+          {item.question}
+        </span>
+        <div class="w-8 h-8 rounded-full bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors duration-200">
+          <svg
+            class="w-4 h-4 text-primary transition-transform duration-300"
+            data-faq-icon
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </div>
+      </button>
+
+      <div
+        class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out"
+        data-faq-content
+      >
+        <div class="overflow-hidden">
+          <div class="px-6 pb-6 pt-0">
+            <p class="text-sm text-zinc-500 leading-relaxed">{item.answer}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const containers = document.querySelectorAll('[data-faq-container]');
+
+    containers.forEach((container) => {
+      const triggers = container.querySelectorAll('[data-faq-trigger]');
+
+      triggers.forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+          const item = trigger.closest('[data-faq-item]');
+          const content = item?.querySelector('[data-faq-content]');
+          const icon = item?.querySelector('[data-faq-icon]');
+          const isOpen = trigger.getAttribute('aria-expanded') === 'true';
+
+          // Close all others in this container
+          container.querySelectorAll('[data-faq-item]').forEach((otherItem) => {
+            if (otherItem !== item) {
+              otherItem.querySelector('[data-faq-trigger]')?.setAttribute('aria-expanded', 'false');
+              const otherContent = otherItem.querySelector('[data-faq-content]');
+              const otherIcon = otherItem.querySelector('[data-faq-icon]');
+              if (otherContent) (otherContent as HTMLElement).style.gridTemplateRows = '0fr';
+              otherIcon?.classList.remove('rotate-45');
+              otherItem.classList.remove('border-primary/30', 'bg-surface/50');
+            }
+          });
+
+          // Toggle current
+          trigger.setAttribute('aria-expanded', String(!isOpen));
+          if (content) {
+            (content as HTMLElement).style.gridTemplateRows = isOpen ? '0fr' : '1fr';
+          }
+          if (isOpen) {
+            icon?.classList.remove('rotate-45');
+            item?.classList.remove('border-primary/30', 'bg-surface/50');
+          } else {
+            icon?.classList.add('rotate-45');
+            item?.classList.add('border-primary/30', 'bg-surface/50');
+          }
+        });
+      });
+    });
+  });
+</script>

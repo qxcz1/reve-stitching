@@ -1,0 +1,272 @@
+---
+/**
+ * src/pages/about.astro
+ * About — Company story, timeline, leadership team, quality commitment.
+ */
+import Layout from '../layouts/Layout.astro';
+import TimelineItem from '../components/TimelineItem.astro';
+
+const timeline = [
+  {
+    year: '2019',
+    title: 'Company Established',
+    description: 'Reve Stitching was founded in Faisalabad with a clear mission: deliver world-class knitted garments for global fashion brands with uncompromising quality and ethical practices.',
+  },
+  {
+    year: '2020',
+    title: 'SEDEX Certification',
+    description: 'Achieved SEDEX compliance within the first year, demonstrating our commitment to ethical manufacturing, worker welfare, and responsible supply chain practices.',
+  },
+  {
+    year: '2021',
+    title: 'SGS Training Program',
+    description: 'Partnered with SGS to implement comprehensive workforce training, ensuring every team member maintains AQL 1.5-4.0 quality standards on every production run.',
+  },
+  {
+    year: '2022',
+    title: 'Production Expansion',
+    description: 'Expanded our facility with 150+ modern machines, increasing monthly production capacity to 300,000+ garments while maintaining precision quality standards.',
+  },
+  {
+    year: '2023',
+    title: 'Full Composite Knitwear',
+    description: 'Became a full composite knitwear manufacturer offering end-to-end production from fabric knitting and dyeing through cutting, stitching, and finishing.',
+  },
+  {
+    year: '2024',
+    title: 'Global Recognition',
+    description: 'Expanded our client portfolio to include major international fashion brands across Europe, serving Boohoo, Pull&Bear, Yours Clothing, and more.',
+  },
+  {
+    year: '2025',
+    title: 'Sustainability & Automation Initiative',
+    description: 'Launched our green manufacturing initiative with energy-efficient processes, sustainable material sourcing, and advanced automation integration.',
+  },
+];
+
+const leaders = [
+  {
+    name: 'Vasim Ahmad',
+    role: 'Chief Executive Officer',
+    image: '/images/team/ceo.jpg',
+    desc: 'Visionary leader driving Reve Stitching\'s growth with a focus on sustainable, ethical manufacturing and global partnerships.',
+  },
+  {
+    name: 'Haroon Iqbal',
+    role: 'Director',
+    image: '/images/team/director-haroon.jpg',
+    desc: 'Oversees client relations and international business development, ensuring seamless communication with global brands.',
+  },
+  {
+    name: 'Abdul Basit',
+    role: 'Director',
+    image: '/images/team/director-basit.jpg',
+    desc: 'Leads operations and production strategy, optimizing manufacturing processes for quality and efficiency.',
+  },
+  {
+    name: 'Ghulam Jilani',
+    role: 'General Manager',
+    image: '/images/team/gm.jpg',
+    desc: 'Manages day-to-day operations, coordinating all departments to deliver consistent, on-time production output.',
+  },
+];
+---
+
+<Layout
+  title="About Us"
+  description="Learn about Reve Stitching — our story, leadership, and commitment to ethical, world-class knitted garment manufacturing since 2019."
+>
+
+  <!-- ━━━━━━ HERO ━━━━━━ -->
+  <section class="relative py-24 lg:py-32 overflow-hidden bg-surface" aria-label="About hero">
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
+
+    <div class="container-main section-padding relative z-10">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <!-- Text -->
+        <div>
+          <span class="section-label" data-animate="fade-up">About Reve Stitching</span>
+          <h1 class="heading-display mb-6" data-animate="fade-up" data-delay="0.1">
+            Crafting Excellence <span class="text-gradient">Since 2019</span>
+          </h1>
+          <p class="text-body mb-6" data-animate="fade-up" data-delay="0.2">
+            Reve Stitching is a leading 100% export-oriented knitted garment manufacturer, strategically located in Faisalabad — the heart of Pakistan's textile industry.
+          </p>
+          <p class="text-body mb-8" data-animate="fade-up" data-delay="0.25">
+            From a modest beginning in 2019, we've grown into a full composite knitwear facility with 150+ modern machines and a monthly production capacity exceeding 300,000 garments. Our commitment to ethical practices, environmental sustainability, and uncompromising quality has earned us the trust of major international brands.
+          </p>
+          <div class="flex flex-wrap gap-4" data-animate="fade-up" data-delay="0.3">
+            <div class="bg-white rounded-xl px-6 py-4 border border-border">
+              <div class="text-2xl font-bold text-primary">300K+</div>
+              <div class="text-xs text-zinc-500 font-medium mt-1">Monthly Capacity</div>
+            </div>
+            <div class="bg-white rounded-xl px-6 py-4 border border-border">
+              <div class="text-2xl font-bold text-primary">150+</div>
+              <div class="text-xs text-zinc-500 font-medium mt-1">Modern Machines</div>
+            </div>
+            <div class="bg-white rounded-xl px-6 py-4 border border-border">
+              <div class="text-2xl font-bold text-primary">6+</div>
+              <div class="text-xs text-zinc-500 font-medium mt-1">Years of Excellence</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image -->
+        <div class="relative" data-animate="fade-left" data-delay="0.2">
+          <div class="rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 aspect-[4/5]">
+            <img
+              src="/images/about-factory.jpg"
+              alt="Inside the Reve Stitching manufacturing facility — production floor with modern machinery"
+              class="w-full h-full object-cover"
+              loading="eager"
+              decoding="async"
+            />
+          </div>
+          <!-- Accent block -->
+          <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-2xl -z-10"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ━━━━━━ TIMELINE ━━━━━━ -->
+  <section class="py-24 lg:py-32 bg-white" aria-labelledby="timeline-heading">
+    <div class="container-main section-padding">
+      <div class="grid lg:grid-cols-2 gap-16">
+        <!-- Left — Heading (sticky on desktop) -->
+        <div class="lg:sticky lg:top-32 lg:self-start">
+          <span class="section-label" data-animate="fade-up">Our Journey</span>
+          <h2 id="timeline-heading" class="heading-headline mb-5" data-animate="fade-up" data-delay="0.1">
+            A Timeline of <span class="text-gradient">Growth</span>
+          </h2>
+          <p class="text-body max-w-md" data-animate="fade-up" data-delay="0.2">
+            From our founding in 2019 to becoming a globally recognized manufacturer, every year marks a milestone in our journey toward excellence.
+          </p>
+        </div>
+
+        <!-- Right — Timeline Items -->
+        <div>
+          {timeline.map((item, i) => (
+            <TimelineItem
+              year={item.year}
+              title={item.title}
+              description={item.description}
+              isLast={i === timeline.length - 1}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ━━━━━━ LEADERSHIP ━━━━━━ -->
+  <section class="py-24 lg:py-32 bg-surface" aria-labelledby="leadership-heading">
+    <div class="container-main section-padding">
+      <!-- Header -->
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <span class="section-label justify-center" data-animate="fade-up">Leadership</span>
+        <h2 id="leadership-heading" class="heading-headline mb-5" data-animate="fade-up" data-delay="0.1">
+          Meet Our <span class="text-gradient">Team</span>
+        </h2>
+        <p class="text-body" data-animate="fade-up" data-delay="0.2">
+          Experienced professionals dedicated to delivering excellence in every garment we produce.
+        </p>
+      </div>
+
+      <!-- Team Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-stagger="0.1">
+        {leaders.map((leader) => (
+          <article class="bg-white rounded-2xl overflow-hidden border border-zinc-100 group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500">
+            <!-- Photo -->
+            <div class="aspect-[3/4] overflow-hidden bg-zinc-100 relative">
+              <img
+                src={leader.image}
+                alt={`${leader.name} — ${leader.role} at Reve Stitching`}
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </div>
+
+            <!-- Info -->
+            <div class="p-6">
+              <h3 class="text-lg font-bold text-zinc-900 mb-1">{leader.name}</h3>
+              <p class="text-sm font-semibold text-primary mb-3">{leader.role}</p>
+              <p class="text-sm text-zinc-500 leading-relaxed">{leader.desc}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ━━━━━━ QUALITY COMMITMENT ━━━━━━ -->
+  <section class="py-24 lg:py-32 bg-white" aria-labelledby="quality-heading">
+    <div class="container-main section-padding">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <!-- Image -->
+        <div class="relative" data-animate="fade-right">
+          <div class="rounded-3xl overflow-hidden shadow-xl aspect-[4/3]">
+            <img
+              src="/images/quality-control.jpg"
+              alt="Quality control inspection process at Reve Stitching"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div>
+          <span class="section-label" data-animate="fade-up">Quality Commitment</span>
+          <h2 id="quality-heading" class="heading-headline mb-6" data-animate="fade-up" data-delay="0.1">
+            Uncompromising <span class="text-gradient">Quality</span> Standards
+          </h2>
+          <p class="text-body mb-8" data-animate="fade-up" data-delay="0.2">
+            Quality is the cornerstone of everything we do. Our SGS-trained workforce maintains AQL 1.5-4.0 standards across every production run, with multi-stage quality checks from raw material inspection to final garment audit.
+          </p>
+
+          <div class="space-y-4" data-animate="fade-up" data-delay="0.3">
+            {[
+              'AQL 1.5-4.0 quality standards on every order',
+              'SGS-trained quality control team',
+              'Multi-stage inspection process (14 checkpoints)',
+              'SEDEX-compliant ethical manufacturing',
+              'Dedicated quality lab with modern testing equipment',
+              'Full traceability from raw material to finished product',
+            ].map((item) => (
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <span class="text-sm text-zinc-600 font-medium">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ━━━━━━ CTA ━━━━━━ -->
+  <section class="py-20 bg-primary-dark relative overflow-hidden">
+    <div class="absolute inset-0 opacity-5">
+      <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+    </div>
+    <div class="container-main section-padding relative z-10 text-center">
+      <h2 class="font-serif text-headline text-white mb-4" data-animate="fade-up">Ready to Partner With Us?</h2>
+      <p class="text-green-100/70 mb-8 max-w-lg mx-auto" data-animate="fade-up" data-delay="0.1">
+        Join the growing list of international brands that trust Reve Stitching for their manufacturing needs.
+      </p>
+      <a href="/contact/" class="btn-white" data-magnetic data-animate="fade-up" data-delay="0.2">
+        Contact Our Team
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+</Layout>

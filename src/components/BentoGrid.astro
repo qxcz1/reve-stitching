@@ -1,0 +1,97 @@
+---
+/**
+ * src/components/BentoGrid.astro
+ * "Why Choose Us" — 6-card asymmetric bento grid with glassmorphism cards.
+ */
+
+const items = [
+  {
+    title: 'SEDEX Compliant',
+    desc: 'Fully compliant facility ensuring ethical business practices, responsible sourcing, and worker welfare across every stage of production.',
+    icon: 'shield',
+    span: 'md:col-span-2',
+  },
+  {
+    title: 'SGS Trained Staff',
+    desc: 'Professional workforce trained by SGS to maintain AQL 1.5-4.0 quality standards consistently on every order.',
+    icon: 'users',
+    span: '',
+  },
+  {
+    title: 'State-of-the-Art Facility',
+    desc: '150+ modern machines in our fully equipped facility for precision manufacturing and consistent quality output.',
+    icon: 'factory',
+    span: '',
+  },
+  {
+    title: 'Rapid Turnaround',
+    desc: 'Strategic location in Pakistan\'s textile hub ensures fast production cycles and timely delivery to global destinations.',
+    icon: 'clock',
+    span: 'md:col-span-2',
+  },
+  {
+    title: 'Diverse Fabric Range',
+    desc: 'Single Jersey, Double Jersey, Terry Fleece, Lycra Rib, Interlock, and specialized performance fabrics available.',
+    icon: 'fabric',
+    span: 'md:col-span-2',
+  },
+  {
+    title: 'Eco-Friendly Operations',
+    desc: 'Contributing to environmental sustainability through responsible manufacturing processes and eco-conscious material choices.',
+    icon: 'leaf',
+    span: '',
+  },
+];
+---
+
+<section class="py-24 lg:py-32 relative overflow-hidden" aria-labelledby="why-choose-heading">
+  <!-- Background decoration -->
+  <div class="absolute inset-0 bg-surface"></div>
+  <div class="absolute top-20 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-10 left-0 w-80 h-80 bg-primary-light/5 rounded-full blur-3xl"></div>
+
+  <div class="container-main section-padding relative z-10">
+    <!-- Header -->
+    <div class="text-center max-w-2xl mx-auto mb-16" data-animate="fade-up">
+      <span class="section-label justify-center">Why Choose Us</span>
+      <h2 id="why-choose-heading" class="heading-headline mb-5">
+        Built for <span class="text-gradient">Excellence</span>
+      </h2>
+      <p class="text-body">
+        Six reasons global brands trust Reve Stitching as their manufacturing partner.
+      </p>
+    </div>
+
+    <!-- Bento Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5" data-stagger="0.1">
+      {items.map((item) => (
+        <article class={`glass-card p-8 lg:p-10 rounded-2xl group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 ${item.span}`}>
+          <!-- Icon -->
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+            {item.icon === 'shield' && (
+              <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            )}
+            {item.icon === 'users' && (
+              <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            )}
+            {item.icon === 'factory' && (
+              <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21"/></svg>
+            )}
+            {item.icon === 'clock' && (
+              <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            )}
+            {item.icon === 'fabric' && (
+              <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0L12 17.25 6.43 14.25m11.142 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25"/></svg>
+            )}
+            {item.icon === 'leaf' && (
+              <svg class="w-6 h-6 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12.75 3.03v.568c0 2.849.87 5.629 2.488 7.962a12.21 12.21 0 002.672 2.86c.266.2.406.518.362.84A7.442 7.442 0 0112 21.75a7.443 7.443 0 01-6.272-6.49c-.044-.322.096-.64.362-.84a12.213 12.213 0 002.672-2.86A13.716 13.716 0 0011.25 3.598v-.568"/></svg>
+            )}
+          </div>
+
+          <h3 class="text-lg font-bold text-zinc-900 mb-2">{item.title}</h3>
+          <p class="text-sm text-zinc-500 leading-relaxed">{item.desc}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

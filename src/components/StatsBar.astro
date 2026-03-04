@@ -1,0 +1,65 @@
+---
+/**
+ * src/components/StatsBar.astro
+ * Animated statistics strip — dark green background, counter-animated numbers.
+ */
+
+const stats = [
+  { value: 0, label: 'SEDEX Compliant', display: 'SEDEX', icon: 'shield' },
+  { value: 300000, label: 'Monthly Capacity', suffix: '+', icon: 'chart' },
+  { value: 150, label: 'Modern Machines', suffix: '+', icon: 'cog' },
+  { value: 2019, label: 'Established', prefix: 'Since ', icon: 'calendar' },
+  { value: 0, label: 'Quality Standards', display: 'AQL 1.5-4.0', icon: 'check' },
+];
+---
+
+<section class="bg-primary-dark relative overflow-hidden" aria-label="Key statistics">
+  <!-- Subtle pattern overlay -->
+  <div class="absolute inset-0 opacity-5">
+    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+  </div>
+
+  <div class="container-main section-padding relative z-10">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 py-12 lg:py-14">
+      {stats.map((stat) => (
+        <div class="text-center" data-animate="fade-up">
+          <!-- Icon -->
+          <div class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/10 mb-3">
+            {stat.icon === 'shield' && (
+              <svg class="w-5 h-5 text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            )}
+            {stat.icon === 'chart' && (
+              <svg class="w-5 h-5 text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+            )}
+            {stat.icon === 'cog' && (
+              <svg class="w-5 h-5 text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-.513m14.095-5.13l1.41-.513M5.106 17.785l1.15-.964m11.49-9.642l1.149-.964M7.501 19.795l.75-1.3m7.5-12.99l.75-1.3m-6.063 16.658l.26-1.477m2.605-14.772l.26-1.477m0 17.726l-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205L6.75 2.906m12.557 14.88l-1.15-.964M5.106 6.214l-1.15-.964m17.503 5.13l-1.41-.514M4.367 8.564l-1.41-.514"/></svg>
+            )}
+            {stat.icon === 'calendar' && (
+              <svg class="w-5 h-5 text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+            )}
+            {stat.icon === 'check' && (
+              <svg class="w-5 h-5 text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            )}
+          </div>
+
+          <!-- Value -->
+          {stat.display ? (
+            <div class="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">{stat.display}</div>
+          ) : (
+            <div
+              class="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight"
+              data-counter={stat.value}
+              data-suffix={stat.suffix || ''}
+              data-prefix={stat.prefix || ''}
+            >
+              {stat.prefix || ''}{stat.value.toLocaleString()}{stat.suffix || ''}
+            </div>
+          )}
+
+          <!-- Label -->
+          <p class="text-xs text-green-200/70 font-medium uppercase tracking-wider">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
