@@ -1,0 +1,13 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/u377110179/public_html/
+    - export NODEJS_VERSION=18
+    - /bin/cp -R * $DEPLOYPATH
+    - cd $DEPLOYPATH
+    - npm install --production
+    - npm run build
+    - /bin/cp -R dist/* $DEPLOYPATH
+    - /bin/rm -rf $DEPLOYPATH/node_modules
+    - /bin/rm -rf $DEPLOYPATH/src
+    - /bin/rm -rf $DEPLOYPATH/public

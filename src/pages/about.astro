@@ -3,7 +3,7 @@
  * src/pages/about.astro
  * About — Company story, timeline, leadership team, quality commitment.
  */
-import Layout from '../layouts/Layout.astro';
+ import Layout from '../layouts/Layout.astro';
 import TimelineItem from '../components/TimelineItem.astro';
 
 const timeline = [
@@ -48,25 +48,25 @@ const leaders = [
   {
     name: 'Vasim Ahmad',
     role: 'Chief Executive Officer',
-    image: '/images/team/ceo.jpg',
+    image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop&q=80',
     desc: 'Visionary leader driving Reve Stitching\'s growth with a focus on sustainable, ethical manufacturing and global partnerships.',
   },
   {
     name: 'Haroon Iqbal',
     role: 'Director',
-    image: '/images/team/director-haroon.jpg',
+    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=800&fit=crop&q=80',
     desc: 'Oversees client relations and international business development, ensuring seamless communication with global brands.',
   },
   {
     name: 'Abdul Basit',
     role: 'Director',
-    image: '/images/team/director-basit.jpg',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop&q=80',
     desc: 'Leads operations and production strategy, optimizing manufacturing processes for quality and efficiency.',
   },
   {
     name: 'Ghulam Jilani',
     role: 'General Manager',
-    image: '/images/team/gm.jpg',
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&h=800&fit=crop&q=80',
     desc: 'Manages day-to-day operations, coordinating all departments to deliver consistent, on-time production output.',
   },
 ];
@@ -115,7 +115,7 @@ const leaders = [
         <div class="relative" data-animate="fade-left" data-delay="0.2">
           <div class="rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 aspect-[4/5]">
             <img
-              src="/images/about-factory.jpg"
+              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=900&fit=crop&q=80"
               alt="Inside the Reve Stitching manufacturing facility — production floor with modern machinery"
               class="w-full h-full object-cover"
               loading="eager"
@@ -209,7 +209,7 @@ const leaders = [
         <div class="relative" data-animate="fade-right">
           <div class="rounded-3xl overflow-hidden shadow-xl aspect-[4/3]">
             <img
-              src="/images/quality-control.jpg"
+              src="https://images.unsplash.com/photo-1532634922-8fe0b757fb13?w=1200&h=900&fit=crop&q=80"
               alt="Quality control inspection process at Reve Stitching"
               class="w-full h-full object-cover"
               loading="lazy"

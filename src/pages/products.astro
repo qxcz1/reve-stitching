@@ -3,62 +3,62 @@
  * src/pages/products.astro
  * Products — Hero, Product grid (8 items), Fabric portfolio section.
  */
-import Layout from '../layouts/Layout.astro';
+ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 
 const products = [
   {
     name: 'Premium Cotton T-Shirts',
-    image: '/images/products/tshirts.jpg',
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=600&fit=crop&q=80',
     rating: 4.9,
     moq: 500,
     features: ['100% Combed Cotton', 'SGS Quality Certified', 'Pre-Shrunk Fabric', 'Custom Prints & Colors'],
   },
   {
     name: 'Corporate Polo Shirts',
-    image: '/images/products/polos.jpg',
+    image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&h=600&fit=crop&q=80',
     rating: 4.8,
     moq: 300,
     features: ['Pique Cotton Construction', 'Moisture Management', 'Reinforced Collars', 'Custom Embroidery'],
   },
   {
     name: 'Premium Hoodies',
-    image: '/images/products/hoodies.jpg',
+    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&h=600&fit=crop&q=80',
     rating: 4.9,
     moq: 250,
     features: ['Terry Fleece / Heavy Jersey', 'YKK Zippers Available', 'Brushed Interior Finish', 'Screen Print & Embroidery'],
   },
   {
     name: 'Athletic Joggers',
-    image: '/images/products/joggers.jpg',
+    image: 'https://images.unsplash.com/photo-1552902875-9ac1f9fe0c3f?w=800&h=600&fit=crop&q=80',
     rating: 4.7,
     moq: 400,
     features: ['Moisture Management Fabric', 'Cotton-Polyester Blend', 'Elastic Cuffs & Waistband', 'Zippered Pockets Option'],
   },
   {
     name: 'Sweatshirts Collection',
-    image: '/images/products/sweatshirts.jpg',
+    image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=800&h=600&fit=crop&q=80',
     rating: 4.8,
     moq: 350,
     features: ['Double Jersey Options', 'Fleece & French Terry', 'Crew & Half-Zip Styles', 'Custom Dye Options'],
   },
   {
     name: "Ladies' Wear Collection",
-    image: '/images/products/ladies-wear.jpg',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&h=600&fit=crop&q=80',
     rating: 4.9,
     moq: 300,
     features: ['Modal Blends Available', 'Lycra Rib Options', 'Delicate Finishing', 'Trend-Forward Designs'],
   },
   {
     name: "Kids' Wear Range",
-    image: '/images/products/kids-wear.jpg',
+    image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=800&h=600&fit=crop&q=80',
     rating: 4.8,
     moq: 500,
     features: ['100% Skin-Friendly Cotton', 'Certified Safe Dyes', 'Reinforced Stitching', 'Fun Prints & Patterns'],
   },
   {
     name: 'Specialized Fabric Garments',
-    image: '/images/products/specialized.jpg',
+    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=600&fit=crop&q=80',
     rating: 4.7,
     moq: 200,
     features: ['Lurex Mixed Fabrics', 'Burnout Printed Options', 'Performance Blends', 'Custom Development'],
@@ -108,7 +108,7 @@ const fabrics = [
   <section class="relative py-24 lg:py-32 overflow-hidden" aria-label="Products hero">
     <div class="absolute inset-0 bg-primary-dark"></div>
     <!-- Fabric texture pattern overlay -->
-    <div class="absolute inset-0 opacity-[0.04]" style="background-image: url('/images/fabric-texture.jpg'); background-size: cover; background-position: center;"></div>
+    <div class="absolute inset-0 opacity-[0.04]" style="background-image: url('https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1920&h=1080&fit=crop&q=80'); background-size: cover; background-position: center;"></div>
     <div class="absolute inset-0 bg-gradient-to-b from-primary-dark/50 to-primary-dark"></div>
 
     <div class="container-main section-padding relative z-10 text-center">
