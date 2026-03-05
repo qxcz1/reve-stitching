@@ -1,5 +1,3 @@
-// src/pages/api/quote/submit.ts
-
 import type { APIRoute } from 'astro';
 import { getSupabase } from '../../../lib/supabase';
 import { generateReferenceNumber } from '../../../lib/services/reference';
@@ -9,6 +7,21 @@ import { uploadFile, uploadMultipleFiles } from '../../../lib/services/storage';
 import type { QuoteSubmitResponse, QuoteRequest } from '../../../lib/types/quote';
 
 export const prerender = false;
+
+// CORS headers
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+// Handle preflight
+export const OPTIONS: APIRoute = async () => {
+  return new Response(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+};
 
 // ─── Validation ───
 
@@ -54,7 +67,10 @@ export const POST: APIRoute = async ({ request }) => {
   const json = (body: QuoteSubmitResponse, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
     });
 
   try {
@@ -166,9 +182,9 @@ export const POST: APIRoute = async ({ request }) => {
     const quoteRecord = inserted as QuoteRequest;
 
     await Promise.allSettled([
-        notifyNewQuote(quoteRecord),
-        sendQuoteCustomerConfirmation(quoteRecord),
-      ]);
+      notifyNewQuote(quoteRecord),
+      sendQuoteCustomerConfirmation(quoteRecord),
+    ]);
 
     // ── 8. Return success ──
 
@@ -188,6 +204,10 @@ export const POST: APIRoute = async ({ request }) => {
 export const ALL: APIRoute = async () => {
   return new Response(JSON.stringify({ error: 'Method not allowed' }), {
     status: 405,
-    headers: { 'Content-Type': 'application/json', Allow: 'POST' },
+    headers: { 
+      'Content-Type': 'application/json', 
+      'Allow': 'POST',
+      ...CORS_HEADERS,
+    },
   });
 };
