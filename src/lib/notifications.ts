@@ -19,7 +19,7 @@ interface ContactData {
     // Email
     try {
       await resend.emails.send({
-        from: 'notifications@revestitching.com',
+        from: 'onboarding@resend.dev',
         to: 'hamzali.revesystems@gmail.com',
         subject: `🔔 New Contact: ${data.subject}`,
         html: `
@@ -70,8 +70,8 @@ interface ContactData {
     // Email
     try {
       await resend.emails.send({
-        from: 'notifications@revestitching.com',
-        to: 'haroon@revestitching.com',
+        from: 'onboarding@resend.dev',
+        to: 'hamzali.revesystems@gmail.com',
         subject: '💬 New Live Chat Request',
         html: `
           <h2>Someone Requested Live Chat</h2>
