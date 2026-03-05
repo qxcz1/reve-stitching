@@ -3,8 +3,27 @@ import { getSupabase } from '../../../lib/supabase';
 
 export const prerender = false;
 
+// Increase body size limit for file uploads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Read the raw body as arrayBuffer first
+    const contentType = request.headers.get('content-type') || '';
+    
+    if (!contentType.includes('multipart/form-data')) {
+      return new Response(JSON.stringify({ error: 'Content-Type must be multipart/form-data' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const folder = (formData.get('folder') as string) || 'general';
@@ -34,7 +53,7 @@ export const POST: APIRoute = async ({ request }) => {
       'image/jpeg',
       'image/webp',
     ];
-    if (!allowedTypes.includes(file.type)) {
+    if (file.type && !allowedTypes.includes(file.type)) {
       return new Response(JSON.stringify({ error: `File type "${file.type}" is not allowed` }), {
         status: 422,
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +74,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { data, error } = await supabase.storage
       .from('quote-uploads')
       .upload(path, buffer, {
-        contentType: file.type,
+        contentType: file.type || 'application/octet-stream',
         upsert: false,
       });
 
@@ -81,7 +100,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   } catch (err) {
     console.error('[Upload] Error:', err);
-    return new Response(JSON.stringify({ error: 'Upload failed' }), {
+    return new Response(JSON.stringify({ error: 'Upload failed: ' + String(err) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

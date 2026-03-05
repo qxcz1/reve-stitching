@@ -1,0 +1,14 @@
+{
+    "functions": {
+      "api/quote/upload.ts": {
+        "maxDuration": 30,
+        "memory": 1024
+      }
+    },
+    "rewrites": [
+      {
+        "source": "/api/quote/upload",
+        "destination": "/api/quote/upload"
+      }
+    ]
+  }
