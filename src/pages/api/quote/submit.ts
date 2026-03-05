@@ -8,6 +8,8 @@ import { notifyNewQuote, sendQuoteCustomerConfirmation } from '../../../lib/noti
 import { uploadFile, uploadMultipleFiles } from '../../../lib/services/storage';
 import type { QuoteSubmitResponse, QuoteRequest } from '../../../lib/types/quote';
 
+export const prerender = false;
+
 // ─── Validation ───
 
 interface ValidationResult {
