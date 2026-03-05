@@ -56,6 +56,7 @@ reve-stitching/
 │   ├── components/
 │   │   ├── Header.astro
 │   │   ├── Footer.astro
+│   │   ├── ChatWidget.astro
 │   │   ├── StatsBar.astro
 │   │   ├── BentoGrid.astro
 │   │   ├── ProcessSteps.astro

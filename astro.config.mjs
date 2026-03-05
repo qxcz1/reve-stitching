@@ -1,12 +1,14 @@
-// astro.config.mjs — Astro project configuration
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
+import vercel from '@astrojs/vercel/serverless';
 
 export default defineConfig({
-  site: 'https://revestitching.com',
+  output: 'hybrid',
+  adapter: vercel(),
   integrations: [
     tailwind({ applyBaseStyles: false }),
   ],
+  site: 'https://revestitching.com',
   build: {
     inlineStylesheets: 'auto',
   },

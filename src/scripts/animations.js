@@ -103,6 +103,10 @@ function setupLenis(LenisClass) {
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     touchMultiplier: 2,
     infinite: false,
+    prevent: (node) => {
+      // Don't hijack scroll inside chat widget
+      return node.closest('#chat-window') !== null;
+    },
   });
 
   lenisInstance.on('scroll', ScrollTrigger.update);

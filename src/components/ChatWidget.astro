@@ -1,0 +1,855 @@
+---
+/**
+ * ChatWidget.astro
+ * Floating chat widget with bot responses and human request option.
+ * Sits in bottom-right corner, works on all pages.
+ */
+---
+
+<!-- ━━━ Chat Toggle Button ━━━ -->
+<button
+  id="chat-toggle"
+  class="fixed bottom-6 right-6 w-14 h-14 bg-primary rounded-full shadow-xl shadow-primary/30 flex items-center justify-center text-white hover:bg-primary-light hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 group"
+  style="z-index: 9999;"
+  aria-label="Open chat"
+>
+  <!-- Chat icon -->
+  <svg id="chat-icon-open" class="w-6 h-6 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+  </svg>
+  <!-- Close icon -->
+  <svg id="chat-icon-close" class="w-6 h-6 absolute opacity-0 transition-all duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M6 18L18 6M6 6l12 12"/>
+  </svg>
+  
+  <!-- Notification dot -->
+  <span id="chat-notification" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-white">
+    1
+  </span>
+</button>
+
+<!-- ━━━ Chat Window ━━━ -->
+<div
+  id="chat-window"
+  class="fixed bottom-24 right-6 w-[380px] max-w-[calc(100vw-2rem)] opacity-0 scale-95 translate-y-4 pointer-events-none transition-all duration-300 ease-out"
+  style="z-index: 9998;"
+  aria-hidden="true"
+>
+  <div class="bg-white rounded-2xl shadow-2xl shadow-black/15 border border-zinc-200 overflow-hidden flex flex-col" style="height: min(600px, calc(100vh - 140px));">
+    
+    <!-- ━━━ Chat Header ━━━ -->
+    <div class="bg-primary px-5 py-4 flex items-center gap-3 shrink-0">
+      <div class="relative">
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+          </svg>
+        </div>
+        <!-- Online status -->
+        <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-primary"></span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-white font-semibold text-sm">Reve Stitching</h3>
+        <p class="text-green-200 text-xs">Online • Typically replies instantly</p>
+      </div>
+      <button
+        id="chat-minimize"
+        class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+        aria-label="Minimize chat"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+      </button>
+    </div>
+
+    <!-- ━━━ Chat Messages ━━━ -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
+      <!-- Messages inserted by JavaScript -->
+    </div>
+
+    <!-- ━━━ Quick Replies ━━━ -->
+    <div id="chat-quick-replies" class="px-4 pb-3 shrink-0">
+      <div class="flex flex-wrap gap-2" id="quick-replies-container">
+        <!-- Quick replies inserted by JavaScript -->
+      </div>
+    </div>
+
+    <!-- ━━━ Chat Input ━━━ -->
+    <div class="px-4 pb-4 pt-2 border-t border-zinc-100 shrink-0">
+      <form id="chat-form" class="flex items-center gap-2">
+        <input
+          id="chat-input"
+          type="text"
+          placeholder="Type your message..."
+          autocomplete="off"
+          class="flex-1 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+        />
+        <button
+          type="submit"
+          class="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-white hover:bg-primary-light transition-colors shrink-0"
+          aria-label="Send message"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </form>
+      <p class="text-[10px] text-zinc-400 text-center mt-2">
+        Powered by Reve Stitching • <button id="request-human-btn" class="text-primary hover:underline font-medium">Talk to a human</button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━ Styles ━━━ -->
+<style>
+  @media (max-width: 480px) {
+    #chat-window {
+      bottom: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    #chat-window > div {
+      border-radius: 1rem 1rem 0 0 !important;
+      height: calc(100vh - 80px) !important;
+      max-height: none !important;
+    }
+  }
+  
+  .typing-dot {
+    animation: typingBounce 1.4s infinite ease-in-out both;
+  }
+  .typing-dot:nth-child(1) { animation-delay: 0s; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  
+  @keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  
+  .chat-msg {
+    animation: msgSlide 0.3s ease-out forwards;
+  }
+  
+  @keyframes msgSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<!-- ━━━ Script ━━━ -->
+<script>
+  document.addEventListener('astro:page-load', () => {
+
+    // ━━━ Elements ━━━
+    const toggle = document.getElementById('chat-toggle');
+    const chatWindow = document.getElementById('chat-window');
+    const minimize = document.getElementById('chat-minimize');
+    const messages = document.getElementById('chat-messages');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input') as HTMLInputElement;
+    const quickContainer = document.getElementById('quick-replies-container');
+    const notification = document.getElementById('chat-notification');
+    const iconOpen = document.getElementById('chat-icon-open');
+    const iconClose = document.getElementById('chat-icon-close');
+    const humanBtn = document.getElementById('request-human-btn');
+
+    let isOpen = false;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let lastPollTimestamp = '1970-01-01T00:00:00Z';
+
+    // ━━━ Session Storage Keys ━━━
+    const SK = {
+      messages: 'reve-chat-messages',
+      hasOpened: 'reve-chat-opened',
+      wasOpen: 'reve-chat-was-open',
+      mode: 'reve-chat-mode',           // 'bot' or 'live'
+      sessionId: 'reve-chat-session-id',
+      visitorToken: 'reve-chat-visitor-token',
+    };
+
+    const botIconSvg = `<svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>`;
+
+    const adminIconSvg = `<svg class="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>`;
+
+    // ━━━ Bot Knowledge Base ━━━
+    const botResponses: Record<string, { answer: string; followUp?: string[] }> = {
+
+      // ━━━ Greetings ━━━
+      'hello|hi|hey|good morning|good afternoon|good evening|howdy|assalam|salam|hola': {
+        answer: "Hello! 👋 Welcome to **Reve Stitching**!\n\nI'm here to help you with any questions about our garment manufacturing services. What would you like to know?",
+        followUp: ['Product range', 'MOQ details', 'Get a quote', 'Quality standards'],
+      },
+      'how are you|how r u|whats up|what\'s up': {
+        answer: "I'm doing great, thank you for asking! 😊\n\nI'm ready to help you with anything related to garment manufacturing. What can I assist you with today?",
+        followUp: ['Product range', 'MOQ details', 'Get a quote'],
+      },
+
+      // ━━━ Products ━━━
+      'product range|product line|what do you make|what do you manufacture|catalog|catalogue|offering|garment type': {
+        answer: "We manufacture a wide range of premium knitted garments:\n\n👕 **Premium Cotton T-Shirts** — MOQ: 500 pcs\n👔 **Corporate Polo Shirts** — MOQ: 300 pcs\n🧥 **Premium Hoodies** — MOQ: 250 pcs\n👖 **Athletic Joggers** — MOQ: 400 pcs\n🧶 **Sweatshirts Collection** — MOQ: 350 pcs\n👗 **Ladies' Wear** — MOQ: 300 pcs\n👶 **Kids' Wear Range** — MOQ: 500 pcs\n✨ **Specialized Fabric Garments** — MOQ: 200 pcs\n\nAll products are fully customizable to your brand specifications!",
+        followUp: ['T-shirt details', 'Hoodie details', 'Fabric types', 'Get a quote'],
+      },
+      'tshirt|t-shirt|t shirt|tee shirt': {
+        answer: "Our **Premium Cotton T-Shirts** are our bestseller! Here's what we offer:\n\n📋 **Specifications:**\n• 100% Combed Cotton\n• GSM Range: 120-220\n• SGS Quality Certified\n• Pre-shrunk fabric\n• MOQ: 500 pieces\n\n🎨 **Customization:**\n• Screen printing\n• DTG printing\n• Embroidery\n• Custom labels & tags\n• Pantone color matching\n• All sizes (XS to 5XL)\n\n⭐ **Rating:** 4.9/5 from our clients",
+        followUp: ['Get a quote', 'Polo details', 'Fabric types', 'Sample request'],
+      },
+      'polo shirt|polo': {
+        answer: "Our **Corporate Polo Shirts** are perfect for brands and uniforms:\n\n📋 **Specifications:**\n• Pique Cotton Construction\n• Moisture Management options\n• Reinforced collars & cuffs\n• MOQ: 300 pieces\n\n🎨 **Customization:**\n• Custom embroidery\n• Woven/printed labels\n• Tipping on collar & cuffs\n• Button customization\n• Pantone color matching\n\n⭐ **Rating:** 4.8/5 from our clients",
+        followUp: ['Get a quote', 'T-shirt details', 'MOQ details'],
+      },
+      'hoodie|hoody|hooded': {
+        answer: "Our **Premium Hoodies** are crafted for comfort and style:\n\n📋 **Specifications:**\n• Terry Fleece / Heavy Jersey\n• GSM Range: 280-400\n• YKK Zippers available\n• Brushed interior finish\n• MOQ: 250 pieces\n\n🎨 **Customization:**\n• Screen print & embroidery\n• Pullover & zip-up styles\n• Kangaroo & side pockets\n• Drawstring options\n• Custom hood lining\n\n⭐ **Rating:** 4.9/5 from our clients",
+        followUp: ['Get a quote', 'Jogger details', 'Sweatshirt details'],
+      },
+      'jogger|joggers|track pant|sweatpant': {
+        answer: "Our **Athletic Joggers** combine performance and comfort:\n\n📋 **Specifications:**\n• Moisture Management Fabric\n• Cotton-Polyester blend options\n• Elastic cuffs & waistband\n• MOQ: 400 pieces\n\n🎨 **Customization:**\n• Zippered pockets\n• Drawstring waistband\n• Side panels\n• Printed/embroidered logos\n• Tapered or straight fit\n\n⭐ **Rating:** 4.7/5 from our clients",
+        followUp: ['Get a quote', 'Hoodie details', 'Fabric types'],
+      },
+      'sweatshirt|crew neck|crewneck': {
+        answer: "Our **Sweatshirts Collection** offers versatile options:\n\n📋 **Specifications:**\n• Double Jersey & Fleece options\n• French Terry available\n• GSM Range: 240-380\n• MOQ: 350 pieces\n\n🎨 **Styles:**\n• Crew neck\n• Half-zip\n• Quarter-zip\n• Oversized fits\n• Custom dye options\n\n⭐ **Rating:** 4.8/5 from our clients",
+        followUp: ['Get a quote', 'Hoodie details', 'Fabric types'],
+      },
+      'ladies|women|woman|female': {
+        answer: "Our **Ladies' Wear Collection** features delicate designs:\n\n📋 **Specifications:**\n• Modal Blends available\n• Lycra Rib options\n• Delicate finishing techniques\n• MOQ: 300 pieces\n\n👗 **Range:**\n• Fitted & relaxed tees\n• Crop tops\n• Bodysuits\n• Lounge sets\n• Trend-forward designs\n\n⭐ **Rating:** 4.9/5 from our clients",
+        followUp: ['Get a quote', 'Kids wear', 'Fabric types'],
+      },
+      'kids wear|children|child wear|baby|infant|junior': {
+        answer: "Our **Kids' Wear Range** prioritizes safety and comfort:\n\n📋 **Specifications:**\n• 100% Skin-Friendly Cotton\n• Certified safe dyes (Oeko-Tex standards)\n• Reinforced stitching\n• MOQ: 500 pieces\n\n👶 **Range:**\n• T-shirts & polos\n• Hoodies & sweatshirts\n• Joggers & shorts\n• Sleepwear\n• Fun prints & patterns\n\n⭐ **Rating:** 4.8/5 from our clients",
+        followUp: ['Get a quote', 'Ladies wear', 'Quality standards'],
+      },
+      'specialized|lurex|burnout|performance wear|technical fabric': {
+        answer: "Our **Specialized Fabric Garments** for unique requirements:\n\n📋 **Specifications:**\n• Lurex Mixed Fabrics\n• Burnout Printed options\n• Performance blends\n• Custom development available\n• MOQ: 200 pieces (lowest MOQ!)\n\n✨ **Capabilities:**\n• Custom fabric development\n• Technical performance wear\n• Fashion-forward textures\n• Mixed-material construction\n\n⭐ **Rating:** 4.7/5 from our clients",
+        followUp: ['Get a quote', 'Fabric types', 'Sample request'],
+      },
+
+      // ━━━ MOQ & Ordering ━━━
+      'moq|minimum order|minimum quantity|order size|small order': {
+        answer: "Our standard MOQ varies by product:\n\n• 👕 T-Shirts → 500 pcs\n• 👔 Polo Shirts → 300 pcs\n• 🧥 Hoodies → 250 pcs\n• 👖 Joggers → 400 pcs\n• 🧶 Sweatshirts → 350 pcs\n• 👗 Ladies' Wear → 300 pcs\n• 👶 Kids' Wear → 500 pcs\n• ✨ Specialized → 200 pcs\n\n💡 **Note:** For first-time trial orders, we can be flexible on MOQ. Just ask!\n\nAll MOQs are per style/color combination.",
+        followUp: ['Get a quote', 'Sample request', 'Lead time', 'Payment terms'],
+      },
+      'order process|how to order|place order|start order|ordering process': {
+        answer: "Here's our simple **ordering process:**\n\n**1️⃣ Inquiry** — Send us your requirements\n**2️⃣ Quote** — We provide pricing within 24hrs\n**3️⃣ Sample** — We develop a sample (7-10 days)\n**4️⃣ Approval** — You approve the sample\n**5️⃣ Production** — Bulk manufacturing (30-45 days)\n**6️⃣ QC** — Multi-point quality inspection\n**7️⃣ Shipping** — Delivery to your destination\n\nWant to start the process? I can connect you with our team!",
+        followUp: ['Get a quote', 'Request human', 'Payment terms', 'Lead time'],
+      },
+      'payment|pay term|deposit|advance payment': {
+        answer: "Our standard **payment terms:**\n\n💳 **For new clients:**\n• 50% advance with order confirmation\n• 50% before shipment (after QC approval)\n\n💳 **For established clients:**\n• 30% advance\n• 70% against B/L (negotiable)\n\n🏦 **Payment methods:**\n• Bank transfer (TT)\n• Letter of Credit (L/C)\n\nSpecific terms can be discussed based on order volume and relationship.",
+        followUp: ['Order process', 'Get a quote', 'Request human'],
+      },
+
+      // ━━━ Fabric & Materials ━━━
+      'fabric|material|textile|cloth type': {
+        answer: "We work with a diverse range of **knitted fabrics:**\n\n🧵 **Single Jersey** (120-200 GSM)\n→ Lightweight, breathable — perfect for tees\n\n🧵 **Double Jersey** (180-300 GSM)\n→ Structured, premium feel — ideal for polos\n\n🧵 **Terry Fleece** (240-400 GSM)\n→ Soft & warm — hoodies and sweatshirts\n\n🧵 **Lycra Rib** (170-280 GSM)\n→ Stretchy & form-fitting — activewear\n\n🧵 **Interlock** (160-280 GSM)\n→ Smooth & stable — premium basics\n\n🧵 **Moisture Management** (140-220 GSM)\n→ Quick-dry performance wear\n\nWe also develop **custom blends** including Lurex, Burnout, Modal, and CVC compositions!",
+        followUp: ['Product range', 'Custom fabric', 'Get a quote'],
+      },
+      'cotton': {
+        answer: "We specialize in **premium cotton fabrics:**\n\n🧵 **Cotton Types We Use:**\n• 100% Combed Cotton — Soft, durable, premium\n• Ring-Spun Cotton — Smooth texture\n• Organic Cotton (GOTS certified) — Sustainable\n• BCI Cotton — Better Cotton Initiative\n• CVC Blends — Cotton-dominant with polyester\n• Poly-Cotton — Durable, cost-effective\n\n📊 **GSM Range:** 120-400 depending on fabric type\n\nAll our cotton is sourced responsibly and tested for quality!",
+        followUp: ['Fabric types', 'Sustainability', 'Get a quote'],
+      },
+      'jersey fabric|single jersey|double jersey': {
+        answer: "We offer both **Single Jersey** and **Double Jersey:**\n\n**Single Jersey:**\n• Weight: 120-200 GSM\n• Smooth face, soft hand\n• Best for: T-shirts, underwear, casual tops\n• Cotton, CVC, and poly-cotton options\n\n**Double Jersey:**\n• Weight: 180-300 GSM\n• Thicker, more structured\n• Best for: Polo shirts, dresses, upscale casual\n• Excellent dimensional stability\n\nBoth available in any Pantone color!",
+        followUp: ['Fleece details', 'Fabric types', 'Get a quote'],
+      },
+      'fleece|terry fleece|french terry': {
+        answer: "Our **Terry Fleece** is perfect for cold-weather garments:\n\n📋 **Details:**\n• Weight: 240-400 GSM\n• Brushed or unbrushed interior\n• French Terry also available\n• Loop-back or peach-finish options\n\n🧥 **Best for:**\n• Hoodies & zip-ups\n• Sweatshirts & crew necks\n• Joggers & sweatpants\n• Loungewear\n\nAvailable in 100% Cotton, CVC, and Poly-Cotton blends.",
+        followUp: ['Hoodie details', 'Fabric types', 'Get a quote'],
+      },
+      'gsm|fabric weight|thickness': {
+        answer: "Here's our **GSM range** by fabric type:\n\n• Single Jersey → 120-200 GSM (Light)\n• Double Jersey → 180-300 GSM (Medium)\n• Terry Fleece → 240-400 GSM (Heavy)\n• Lycra Rib → 170-280 GSM (Stretchy)\n• Interlock → 160-280 GSM (Smooth)\n• Moisture Mgmt → 140-220 GSM (Technical)\n\n💡 **Tip:** Most t-shirts are 150-180 GSM. Hoodies are typically 300-380 GSM.\n\nNot sure which GSM to choose? Tell me your product and I'll recommend!",
+        followUp: ['Fabric types', 'Product range', 'Get a quote'],
+      },
+      'custom fabric|develop fabric|special fabric|custom blend': {
+        answer: "Yes! We can **develop custom fabrics** for your brand:\n\n✅ Custom yarn blends (Cotton, Polyester, Modal, Viscose, Spandex)\n✅ Custom GSM (any weight you need)\n✅ Special finishes (peach, enzyme wash, garment dye)\n✅ Performance treatments (moisture-wicking, anti-microbial)\n✅ Sustainable options (organic cotton, recycled polyester, BCI cotton)\n\n⏱️ Custom fabric development takes **2-3 weeks** for sampling.\n\nWant to discuss a custom fabric? I can connect you with our R&D team!",
+        followUp: ['Request human', 'Fabric types', 'Get a quote'],
+      },
+
+      // ━━━ Quality ━━━
+      'quality|aql|inspection|quality control|quality standard|testing': {
+        answer: "Quality is the cornerstone of our business:\n\n✅ **AQL 1.5-4.0** standards on every order\n✅ **SGS-trained** quality control team\n✅ **14-checkpoint** inspection process\n✅ Dedicated quality lab\n✅ Full traceability\n\n🔍 **Our 14-Point QC Process:**\n1. Fabric inspection\n2. Shrinkage testing\n3. Color fastness check\n4. Pattern verification\n5. Cutting accuracy\n6. In-line sewing checks\n7. Measurement verification\n8. Stitch quality audit\n9. Print/embroidery check\n10. Pressing quality\n11. Finishing inspection\n12. Packaging check\n13. Final AQL audit\n14. Pre-shipment inspection\n\nEvery garment must pass before export!",
+        followUp: ['Certifications', 'Sample request', 'Get a quote'],
+      },
+      'defect|reject|return|complaint': {
+        answer: "We take quality issues very seriously:\n\n🛡️ **Our Guarantee:**\n• All shipments pass AQL 1.5-4.0 inspection\n• Pre-shipment inspection photos shared with you\n• Third-party inspection welcome (SGS, Bureau Veritas, etc.)\n\n📋 **If issues arise:**\n• Documented claims process\n• Quick resolution within 48 hours\n• Replacement or credit for genuine defects\n• Dedicated quality liaison for your account\n\nOur defect rate is consistently below **2%** — among the best in the industry.",
+        followUp: ['Quality standards', 'Certifications', 'Request human'],
+      },
+
+      // ━━━ Certifications ━━━
+      'certification|sedex|iso|gots|bci|compliance|ethical': {
+        answer: "We hold multiple international certifications:\n\n🏅 **SEDEX** — Ethical compliance & worker welfare\n🏅 **ISO 9001:2015** — Quality management systems\n🏅 **BCI** — Better Cotton Initiative\n🏅 **GOTS** — Global Organic Textile Standard\n🏅 **OCS** — Organic Content Standard\n🏅 **Higg Index** — Sustainable Apparel Coalition\n🏅 **RCS** — Recycled Claim Standard\n🏅 **GRS** — Global Recycled Standard\n\n🌱 We're committed to **sustainable manufacturing** with:\n• Energy-efficient processes\n• Water recycling systems\n• Responsible waste management\n• Ethical labor practices",
+        followUp: ['Quality standards', 'Sustainability', 'Get a quote'],
+      },
+      'sustainability|sustainable|environment|eco-friendly|recycle|green initiative': {
+        answer: "Sustainability is a core value at Reve Stitching:\n\n🌍 **Our Green Initiatives:**\n\n♻️ **Materials:**\n• Organic cotton (GOTS certified)\n• Recycled polyester (GRS certified)\n• BCI cotton sourcing\n• Sustainable packaging options\n\n🏭 **Factory:**\n• Energy-efficient machinery\n• Water recycling systems\n• Solar energy integration (2025)\n• Zero-waste cutting technology\n\n👥 **Social:**\n• Fair wages & safe working conditions\n• SEDEX compliant\n• No child labor policy\n• Community development programs\n\nAsk about our eco-friendly product lines!",
+        followUp: ['Certifications', 'Get a quote', 'About us'],
+      },
+
+      // ━━━ Pricing & Quotes ━━━
+      'price|cost|pricing|quote|how much|rate|budget': {
+        answer: "Pricing depends on several factors:\n\n💰 **What affects price:**\n• Fabric type & GSM\n• Order quantity (higher = better price)\n• Print/embroidery complexity\n• Packaging requirements\n• Delivery timeline\n\n📊 **General ranges:**\n• Basic T-shirts: $3-8 per unit\n• Polo Shirts: $5-12 per unit\n• Hoodies: $8-18 per unit\n• Joggers: $6-14 per unit\n\n⚠️ *These are approximate. Exact pricing requires your specific requirements.*\n\nFor an accurate quote, share your **tech pack** or describe your needs. We respond within **24 hours**!",
+        followUp: ['Request human', 'Send requirements', 'MOQ details'],
+      },
+
+      // ━━━ Samples ━━━
+      'sample|prototype|before bulk|trial order': {
+        answer: "Absolutely! We provide **pre-production samples:**\n\n📋 **Sample Process:**\n\n**Step 1:** Share your requirements/tech pack\n**Step 2:** We provide a sample quote\n**Step 3:** Sample development: **7-10 business days**\n**Step 4:** Sample shipped to you\n**Step 5:** Your feedback & revisions\n**Step 6:** Bulk production after approval\n\n🔄 **Revisions:** Up to 2 rounds at no extra cost\n💰 **Cost:** Sample charges apply (adjusted against bulk order)\n📦 **Shipping:** Via DHL/FedEx (at your cost)\n\nReady to start a sample? Share your requirements!",
+        followUp: ['Get a quote', 'Send requirements', 'Lead time', 'Request human'],
+      },
+
+      // ━━━ Lead Time & Shipping ━━━
+      'lead time|delivery time|how long|turnaround|production time|timeline|deadline': {
+        answer: "Our production timelines:\n\n⏱️ **Standard Lead Times:**\n\n• Sample Development → 7-10 days\n• Fabric Sourcing → 7-15 days\n• Bulk Production → 20-30 days\n• QC & Packing → 3-5 days\n• **Total → 30-45 days**\n\n🚀 **Rush Orders:**\n• Available on case-by-case basis\n• 15-25 day turnaround possible\n• Priority surcharge may apply\n\n📦 **Shipping:**\n• Sea freight: 15-30 days\n• Air freight: 3-7 days\n• FOB Karachi / CIF destination\n\nNeed a specific delivery date? Let's discuss!",
+        followUp: ['Shipping details', 'Get a quote', 'Request human'],
+      },
+      'shipping|freight|fob|cif|delivery method|transport|logistics': {
+        answer: "Our **shipping & logistics** options:\n\n🚢 **Sea Freight:**\n• Port: Karachi, Pakistan\n• Transit to UK: ~18-22 days\n• Transit to EU: ~20-28 days\n• Most economical option\n\n✈️ **Air Freight:**\n• Airport: Faisalabad / Lahore\n• Transit: 3-7 days worldwide\n• For urgent or sample shipments\n\n📋 **Terms Available:**\n• **FOB** (Free On Board)\n• **CIF** (Cost, Insurance, Freight)\n• **DDP** (Delivered Duty Paid — upon request)\n\n📄 All export documentation handled by us.",
+        followUp: ['Lead time', 'Get a quote', 'Request human'],
+      },
+
+      // ━━━ Customization ━━━
+      'customization|customize|personalize|private label|own brand|own label': {
+        answer: "We offer **full customization** for your brand:\n\n🎨 **Decoration Options:**\n• Screen printing (up to 12 colors)\n• DTG (Direct-to-Garment) printing\n• Embroidery (flat, 3D puff, chain stitch)\n• Heat transfer printing\n• Sublimation printing\n• Discharge printing\n\n🏷️ **Branding:**\n• Custom woven labels\n• Printed care labels\n• Custom hang tags\n• Branded packaging\n• Custom polybags\n\n✂️ **Design Services:**\n• Pattern development from your sketch\n• Tech pack development assistance\n• Size grading\n• Color matching (Pantone)\n\nSend us your design and we'll bring it to life!",
+        followUp: ['Sample request', 'Get a quote', 'Send requirements'],
+      },
+      'logo': {
+        answer: "We can add your **logo** using several methods:\n\n🎨 **Logo Application Options:**\n• **Embroidery** — Premium, textured, durable\n• **Screen Print** — Cost-effective for bulk\n• **DTG Print** — Full-color, photographic quality\n• **Heat Transfer** — Detailed, multi-color\n• **Woven Label** — Inside garment branding\n• **Rubber/Silicone** — 3D raised effect\n\n📋 **What we need from you:**\n• Logo file (AI, EPS, PNG, or PDF)\n• Preferred placement (chest, back, sleeve)\n• Preferred method (or we can recommend)\n\nSend us your logo and we'll provide a free mockup!",
+        followUp: ['Get a quote', 'Sample request', 'Send requirements'],
+      },
+      'printing|screen print|dtg|sublimation': {
+        answer: "Our **printing capabilities:**\n\n🖨️ **Screen Printing:**\n• Up to 12 colors\n• Plastisol & water-based inks\n• Discharge printing\n• High-density printing\n• Best for bulk orders\n\n🖨️ **DTG Printing:**\n• Full-color photographic prints\n• No color limitations\n• Best for complex designs\n• Small batch friendly\n\n🖨️ **Other Options:**\n• Sublimation (polyester fabrics)\n• Heat transfer / vinyl\n• Foil printing\n• Flock printing\n• Puff printing\n\nAll printing undergoes wash testing to ensure durability!",
+        followUp: ['Embroidery details', 'Get a quote', 'Sample request'],
+      },
+      'embroidery|embroider': {
+        answer: "Our **embroidery services:**\n\n🪡 **Types:**\n• Flat embroidery\n• 3D puff embroidery\n• Chain stitch\n• Appliqué\n• Sequin embroidery\n\n📋 **Details:**\n• Up to 15 colors per design\n• Max stitch count: 100,000+\n• Placement: chest, back, sleeve, cap\n• Digitization included\n• Free stitch-out sample\n\n💰 Pricing based on stitch count and quantity.\n\nSend us your logo and we'll provide a digitized mockup!",
+        followUp: ['Printing details', 'Get a quote', 'Sample request'],
+      },
+
+      // ━━━ Company Info ━━━
+      'about|tell me about|company info|who are you|history|background': {
+        answer: "**Reve Stitching** — Where Quality Meets Innovation\n\n📅 **Founded:** 2019 in Faisalabad, Pakistan\n🏭 **Facility:** Full composite knitwear unit\n⚙️ **Capacity:** 300,000+ garments/month\n🔧 **Machines:** 150+ modern units\n🌍 **Markets:** UK, Europe, and growing\n🏅 **Certified:** SEDEX, ISO, BCI, GOTS & more\n\n📈 **Our Journey:**\n• 2019 — Company established\n• 2020 — SEDEX certification\n• 2021 — SGS training program\n• 2022 — Production expansion\n• 2023 — Full composite facility\n• 2024 — Global brand partnerships\n• 2025 — Sustainability initiative\n\nWe're not just a manufacturer — we're your **strategic partner** in growth!",
+        followUp: ['Our clients', 'Certifications', 'Factory tour', 'Get a quote'],
+      },
+      'team|management|leadership|owner|ceo|director': {
+        answer: "Meet our **leadership team:**\n\n👤 **Vasim Ahmad** — CEO\nVisionary leader driving growth with focus on sustainable manufacturing.\n\n👤 **Haroon Iqbal** — Director\nOversees client relations and international business development.\n📧 haroon@revestitching.com\n\n👤 **Abdul Basit** — Director\nLeads operations and production strategy.\n📧 abdul.basit@revestitching.com\n\n👤 **Ghulam Jilani** — General Manager\nManages day-to-day operations across all departments.\n\nWant to speak with someone directly?",
+        followUp: ['Request human', 'Contact team', 'About us'],
+      },
+      'factory tour|visit factory|see factory|facility': {
+        answer: "We welcome **factory visits!** Here's what you'll see:\n\n🏭 **Our Facility Features:**\n• 150+ modern knitting & sewing machines\n• Dedicated cutting department\n• In-house embroidery unit\n• Quality control laboratory\n• Pressing & finishing department\n• Packaging & dispatch area\n• Clean, well-lit workspace\n• SEDEX-compliant environment\n\n📍 **Location:** Chak No. 196/R.B, Ghona Road, Faisalabad\n🕐 **Visit Hours:** Mon-Sat, 8 AM - 6 PM\n\nContact us to schedule your visit — we'll arrange everything!",
+        followUp: ['Contact team', 'Request human', 'Location details'],
+      },
+
+      // ━━━ Clients & Markets ━━━
+      'client|brand|who do you work|partner|boohoo|customer': {
+        answer: "We're proud to partner with **international brands:**\n\n🏷️ **Our Clients:**\n• Boohoo\n• Pull&Bear\n• Yours Clothing\n• Closure London\n• Daisy Street\n• Marshall Artist\n• Threadbare\n• Forever Club\n• Helme\n\n🌍 **Industries Served:**\n• Fast Fashion & High Street\n• Sportswear & Activewear\n• Children's Apparel\n• Corporate & Uniforms\n\nJoin our growing list of satisfied partners!",
+        followUp: ['Product range', 'Quality standards', 'Get a quote'],
+      },
+
+      // ━━━ Location & Contact ━━━
+      'location|address|where are you|faisalabad|find you|map': {
+        answer: "📍 **Our Location:**\n\n**Reve Stitching**\nChak No. 196/R.B, Ghona Road\nFaisalabad (38000), Pakistan\n\n🌐 **Why Faisalabad?**\nKnown as the \"Manchester of Pakistan\" — it's the heart of Pakistan's textile industry with:\n• Access to raw materials\n• Skilled labor force\n• Textile infrastructure\n• Proximity to Karachi port\n\n🕐 **Working Hours:**\nMonday – Saturday: 8 AM – 6 PM\nSunday: Closed\n\nFactory visits are always welcome!",
+        followUp: ['Contact team', 'Factory tour', 'Request human'],
+      },
+      'contact|email|phone|call|reach|get in touch': {
+        answer: "Here's how to **reach us:**\n\n📧 **Email:**\n• Haroon Iqbal (Client Relations)\n  haroon@revestitching.com\n\n• Abdul Basit (Operations)\n  abdul.basit@revestitching.com\n\n📝 **Contact Form:**\nVisit our [contact page](/contact/) for detailed inquiries.\n\n🕐 **Response Time:**\n• Email: Within 24 hours\n• Urgent: Same day during business hours\n\n📍 **Office Hours:**\nMon-Sat: 8 AM - 6 PM (PKT)",
+        followUp: ['Get a quote', 'Request human', 'Visit contact page'],
+      },
+
+      // ━━━ Process ━━━
+      'manufacturing process|production process|how do you make|workflow': {
+        answer: "Our **14-step manufacturing process:**\n\n1️⃣ Product Design\n2️⃣ Fabric Selection & Inspection\n3️⃣ Pattern Making\n4️⃣ Grading\n5️⃣ Marking\n6️⃣ Spreading\n7️⃣ Cutting\n8️⃣ Bundling\n9️⃣ Sewing\n🔟 Embroidery/Printing\n1️⃣1️⃣ Pressing & Folding\n1️⃣2️⃣ Finishing & Detailing\n1️⃣3️⃣ Quality Control (AQL 1.5-4.0)\n1️⃣4️⃣ Finished & Packed\n\nEvery step has dedicated quality checkpoints!",
+        followUp: ['Quality standards', 'Lead time', 'Get a quote'],
+      },
+      'capacity|production volume|per month|output': {
+        answer: "Our **production capabilities:**\n\n🏭 **Monthly Capacity:** 300,000+ garments\n⚙️ **Machines:** 150+ modern units\n👥 **Workforce:** Skilled, SGS-trained team\n\n📊 **Breakdown by product:**\n• T-Shirts: ~100,000/month\n• Polos: ~50,000/month\n• Hoodies: ~40,000/month\n• Joggers: ~40,000/month\n• Other: ~70,000/month\n\n📈 We can scale up for large orders with our partner facilities!\n\n🔄 **We're a full composite unit:**\nFabric Knitting → Dyeing → Cutting → Stitching → Finishing → Packing\n\nAll under one roof!",
+        followUp: ['Product range', 'Lead time', 'Get a quote'],
+      },
+
+      // ━━━ Common Questions ━━━
+      'send requirement|share requirement|tech pack|send design|share design': {
+        answer: "Great! Here's how to **share your requirements:**\n\n📧 **Email your tech pack to:**\nharoon@revestitching.com\n\n📋 **What to include:**\n• Product type (tee, hoodie, etc.)\n• Fabric preference & GSM\n• Colors (Pantone codes if possible)\n• Size range needed\n• Quantity per size\n• Print/embroidery details\n• Any special requirements\n\n💡 **Don't have a tech pack?**\nNo worries! Even a sketch or reference image works. We can help develop the full specification.\n\nWe'll respond with a detailed quote within **24 hours**!",
+        followUp: ['Get a quote', 'Request human', 'Sample request'],
+      },
+      'why you|why not china|advantage|why choose|compare|competitor|better than': {
+        answer: "Here's why brands choose **Reve Stitching:**\n\n🏆 **Our Advantages:**\n\n✅ **Lower MOQs** — Start from 200 pcs (vs 1000+ in China)\n✅ **Faster Communication** — Same timezone as EU/UK\n✅ **Competitive Pricing** — 15-30% lower than comparable quality\n✅ **GSP+ Status** — Duty-free exports to EU\n✅ **Quality** — AQL 1.5-4.0 with SGS-trained staff\n✅ **Flexibility** — Quick design changes & re-orders\n✅ **Ethical** — SEDEX compliant, fair wages\n✅ **Full Composite** — Everything under one roof\n\n🆚 **vs China:** Lower MOQs, faster turnaround, competitive pricing\n🆚 **vs Bangladesh:** Better quality control, more flexible\n🆚 **vs Turkey:** More competitive pricing, similar quality",
+        followUp: ['Get a quote', 'Our clients', 'Quality standards'],
+      },
+
+      // ━━━ Pleasantries ━━━
+      'thank|thanks|thx|appreciate|great job|awesome|perfect|wonderful': {
+        answer: "You're most welcome! 😊 We're glad to help!\n\nIs there anything else you'd like to know about our manufacturing services?",
+        followUp: ['Get a quote', 'Request human', 'Product range'],
+      },
+      'bye|goodbye|see you|talk later|that\'s all|done|no more': {
+        answer: "Thank you for chatting with us! 👋\n\nIt was great talking to you. Here's a quick summary of how to reach us:\n\n📧 haroon@revestitching.com\n📧 abdul.basit@revestitching.com\n🌐 [Contact Page](/contact/)\n\nWe look forward to working with you. Have a wonderful day! 🌟",
+      },
+      'okay|sure|got it|understood|i see|alright|noted': {
+        answer: "Great! 👍 Is there anything else you'd like to know? I'm here to help with any questions about:\n\n• Products & customization\n• Pricing & MOQ\n• Quality & certifications\n• Lead times & shipping\n\nOr I can connect you with our team directly!",
+        followUp: ['Get a quote', 'Request human', 'Product range'],
+      },
+
+      // ━━━ Human Request ━━━
+      'human|real person|agent|speak to someone|talk to someone|representative': {
+        answer: "I'd be happy to connect you with our team! 🤝\n\n📧 **Direct Contacts:**\n\n**Haroon Iqbal** — Client Relations\nEmail: haroon@revestitching.com\n\n**Abdul Basit** — Operations\nEmail: abdul.basit@revestitching.com\n\n📝 **Or fill out our contact form:**\n→ [Contact Page](/contact/)\n\n🕐 **Response Time:**\n• During business hours: Same day\n• After hours: Next business day\n• Business hours: Mon-Sat, 8AM-6PM (PKT)\n\nOur team is always happy to assist! 💚",
+      },
+    };
+
+    // ━━━ Quick Reply Map ━━━
+    const quickReplyMap: Record<string, string> = {
+      'Product range': 'What products do you manufacture?',
+      'MOQ details': 'What is your minimum order quantity?',
+      'Get a quote': 'I want to get a price quote',
+      'Lead time': 'What is your production lead time?',
+      'Quality standards': 'What quality standards do you maintain?',
+      'Certifications': 'What certifications do you have?',
+      'Fabric types': 'What fabric types do you work with?',
+      'Request human': 'I want to talk to a human representative',
+      'Contact team': 'How can I contact your team?',
+      'About us': 'Tell me about Reve Stitching',
+      'Our clients': 'What brands do you work with?',
+      'Visit contact page': '__LINK__/contact/',
+      'T-shirt details': 'Tell me about your t-shirts',
+      'Polo details': 'Tell me about your polo shirts',
+      'Hoodie details': 'Tell me about your hoodies',
+      'Jogger details': 'Tell me about your joggers',
+      'Sweatshirt details': 'Tell me about your sweatshirts',
+      'Ladies wear': 'Tell me about ladies wear collection',
+      'Kids wear': 'Tell me about kids wear range',
+      'Custom fabric': 'Can you develop custom fabrics?',
+      'Fleece details': 'Tell me about terry fleece fabric',
+      'Sample request': 'Do you provide samples before bulk?',
+      'Payment terms': 'What are your payment terms?',
+      'Shipping details': 'What are your shipping options?',
+      'Order process': 'How does the ordering process work?',
+      'Printing details': 'What printing options do you offer?',
+      'Embroidery details': 'What embroidery services do you offer?',
+      'Factory tour': 'Can I visit your factory?',
+      'Location details': 'Where are you located?',
+      'Send requirements': 'How do I share my requirements?',
+      'Sustainability': 'Tell me about your sustainability efforts',
+      'Capacity details': 'What is your production capacity?',
+    };
+
+    // ━━━ Default Quick Replies ━━━
+    const defaultQuickReplies = [
+      { label: '📦 Product Range', value: 'What products do you manufacture?' },
+      { label: '📋 MOQ Details', value: 'What is your minimum order quantity?' },
+      { label: '💰 Get a Quote', value: 'I want to get a price quote' },
+      { label: '⏱️ Lead Time', value: 'What is your production lead time?' },
+    ];
+
+    // ━━━ Storage Helpers ━━━
+    interface ChatMsg {
+      text: string;
+      sender: 'bot' | 'user' | 'admin' | 'system';
+      time: string;
+    }
+
+    function ss(key: string, val?: string): string | null {
+      try {
+        if (val !== undefined) { sessionStorage.setItem(key, val); return val; }
+        return sessionStorage.getItem(key);
+      } catch { return null; }
+    }
+
+    function getMode(): 'bot' | 'live' { return (ss(SK.mode) as 'bot' | 'live') || 'bot'; }
+    function setMode(m: 'bot' | 'live') { ss(SK.mode, m); }
+    function getSessionId(): string | null { return ss(SK.sessionId); }
+    function getVisitorToken(): string {
+      let t = ss(SK.visitorToken);
+      if (!t) { t = crypto.randomUUID(); ss(SK.visitorToken, t); }
+      return t;
+    }
+
+    function saveMsg(text: string, sender: ChatMsg['sender']) {
+      try {
+        const h: ChatMsg[] = JSON.parse(ss(SK.messages) || '[]');
+        h.push({ text, sender, time: formatTime() });
+        ss(SK.messages, JSON.stringify(h));
+      } catch {}
+    }
+
+    function getMsgHistory(): ChatMsg[] {
+      try { return JSON.parse(ss(SK.messages) || '[]'); } catch { return []; }
+    }
+
+    // ━━━ Formatters ━━━
+    function formatTime(): string {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatMessage(text: string): string {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-primary underline hover:text-primary-light">$1</a>')
+        .replace(/\n/g, '<br/>');
+    }
+
+    // ━━━ Render Message ━━━
+    function renderMessage(text: string, sender: ChatMsg['sender'], time?: string): void {
+      if (!messages) return;
+      const t = time || formatTime();
+      const div = document.createElement('div');
+
+      if (sender === 'system') {
+        div.className = 'chat-msg flex justify-center';
+        div.innerHTML = `<div class="px-4 py-2 bg-zinc-100 rounded-full text-xs text-zinc-500">${formatMessage(text)}</div>`;
+      } else if (sender === 'user') {
+        div.className = 'chat-msg flex justify-end';
+        div.innerHTML = `
+          <div class="max-w-[80%]">
+            <div class="bg-primary text-white rounded-2xl rounded-tr-md px-4 py-3 text-sm leading-relaxed">${formatMessage(text)}</div>
+            <span class="text-[10px] text-zinc-400 mt-1 block text-right pr-1">${t}</span>
+          </div>`;
+      } else {
+        // bot or admin
+        const icon = sender === 'admin' ? adminIconSvg : botIconSvg;
+        const iconBg = sender === 'admin' ? 'bg-green-100' : 'bg-primary/10';
+        div.className = 'chat-msg flex justify-start';
+        div.innerHTML = `
+          <div class="flex gap-2.5 max-w-[85%]">
+            <div class="w-7 h-7 rounded-full ${iconBg} flex items-center justify-center shrink-0 mt-1">${icon}</div>
+            <div>
+              ${sender === 'admin' ? '<span class="text-[10px] text-green-600 font-medium mb-0.5 block">Team Member</span>' : ''}
+              <div class="bg-zinc-100 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-zinc-700 leading-relaxed">${formatMessage(text)}</div>
+              <span class="text-[10px] text-zinc-400 mt-1 block pl-1">${t}</span>
+            </div>
+          </div>`;
+      }
+
+      messages.appendChild(div);
+    }
+
+    function addMessage(text: string, sender: ChatMsg['sender']): void {
+      renderMessage(text, sender);
+      saveMsg(text, sender);
+      if (messages) messages.scrollTop = messages.scrollHeight;
+    }
+
+    // ━━━ Typing Indicator ━━━
+    function showTyping(): void {
+      if (!messages) return;
+      const div = document.createElement('div');
+      div.id = 'typing-indicator';
+      div.className = 'chat-msg flex justify-start';
+      div.innerHTML = `
+        <div class="flex gap-2.5">
+          <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">${botIconSvg}</div>
+          <div class="bg-zinc-100 rounded-2xl rounded-tl-md px-4 py-3 flex items-center gap-1.5">
+            <div class="w-2 h-2 bg-zinc-400 rounded-full typing-dot"></div>
+            <div class="w-2 h-2 bg-zinc-400 rounded-full typing-dot"></div>
+            <div class="w-2 h-2 bg-zinc-400 rounded-full typing-dot"></div>
+          </div>
+        </div>`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function hideTyping(): void {
+      document.getElementById('typing-indicator')?.remove();
+    }
+
+    // ━━━ Quick Replies ━━━
+    function showQuickReplies(replies?: string[]): void {
+      if (!quickContainer) return;
+      quickContainer.innerHTML = '';
+      const items = replies
+        ? replies.map(r => ({ label: r, value: quickReplyMap[r] || r }))
+        : defaultQuickReplies;
+
+      items.forEach(item => {
+        if (item.value?.startsWith('__LINK__')) {
+          const a = document.createElement('a');
+          a.href = item.value.replace('__LINK__', '');
+          a.className = 'inline-flex items-center gap-1 px-3 py-2 bg-surface border border-border rounded-full text-xs font-medium text-primary hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 cursor-pointer';
+          a.textContent = `🔗 ${item.label}`;
+          quickContainer.appendChild(a);
+          return;
+        }
+        const btn = document.createElement('button');
+        btn.className = 'px-3 py-2 bg-surface border border-border rounded-full text-xs font-medium text-zinc-600 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 cursor-pointer';
+        btn.textContent = item.label;
+        btn.addEventListener('click', () => handleUserMessage(item.value || item.label));
+        quickContainer.appendChild(btn);
+      });
+    }
+
+    // ━━━ Bot Response Finder ━━━
+    function findBotResponse(message: string): { answer: string; followUp?: string[] } {
+      const lower = message.toLowerCase();
+      let bestMatch: { answer: string; followUp?: string[] } | null = null;
+      let bestScore = 0;
+
+      for (const [keywords, response] of Object.entries(botResponses)) {
+        const keywordList = keywords.split('|');
+        let score = 0;
+        for (const kw of keywordList) {
+          if (kw.length <= 3) {
+            if (new RegExp(`\\b${kw}\\b`, 'i').test(lower)) score += kw.length;
+          } else {
+            if (lower.includes(kw)) score += kw.length;
+          }
+        }
+        if (score > bestScore) { bestScore = score; bestMatch = response; }
+      }
+
+      if (bestMatch) return bestMatch;
+      return {
+        answer: "Thanks for your message! I'm not sure about that specific question, but our team can definitely help.\n\nYou can:\n• Ask me about **products, MOQ, quality, or certifications**\n• Click **\"Talk to a human\"** below for direct assistance\n• Visit our **[contact page](/contact/)** for detailed inquiries",
+        followUp: ['Product range', 'MOQ details', 'Request human', 'Get a quote'],
+      };
+    }
+
+    // ━━━ Live Chat: Create Session ━━━
+    async function requestHuman(): Promise<void> {
+      addMessage("I'm connecting you with a team member! 🤝", 'bot');
+
+      // Show quick form for name/email
+      if (quickContainer) {
+        quickContainer.innerHTML = `
+          <div class="w-full space-y-2 p-2">
+            <p class="text-xs text-zinc-500">Optional: share your info so we can assist you better</p>
+            <input id="live-name" type="text" placeholder="Your name" class="w-full px-3 py-2 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:border-primary" />
+            <input id="live-email" type="email" placeholder="Your email" class="w-full px-3 py-2 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:border-primary" />
+            <div class="flex gap-2">
+              <button id="live-connect-btn" class="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-light transition-colors">Connect Now</button>
+              <button id="live-skip-btn" class="px-3 py-2 border border-zinc-200 rounded-lg text-xs text-zinc-600 hover:bg-zinc-50 transition-colors">Skip</button>
+            </div>
+          </div>`;
+
+        const connect = (name?: string, email?: string) => {
+          createLiveSession(name, email);
+        };
+
+        document.getElementById('live-connect-btn')?.addEventListener('click', () => {
+          const name = (document.getElementById('live-name') as HTMLInputElement)?.value;
+          const email = (document.getElementById('live-email') as HTMLInputElement)?.value;
+          connect(name, email);
+        });
+
+        document.getElementById('live-skip-btn')?.addEventListener('click', () => {
+          connect();
+        });
+      }
+    }
+
+    async function createLiveSession(name?: string, email?: string): Promise<void> {
+      if (quickContainer) quickContainer.innerHTML = '';
+
+      const visitorToken = getVisitorToken();
+
+      try {
+        const res = await fetch('/api/chat/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            visitorToken,
+            visitorName: name || null,
+            visitorEmail: email || null,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error);
+
+        ss(SK.sessionId, data.sessionId);
+        setMode('live');
+
+        addMessage("You're now connected! 🟢 A team member will join this chat shortly.\n\nYou can start typing your questions — they'll see your messages when they connect.\n\n🕐 Typical response: Within a few minutes during business hours (Mon-Sat, 8AM-6PM PKT).", 'system');
+
+        startPolling();
+
+      } catch (e) {
+        addMessage("Sorry, I couldn't connect you right now. Please try emailing us at **haroon@revestitching.com** instead.", 'bot');
+        showQuickReplies(['Get a quote', 'Contact team']);
+      }
+    }
+
+    // ━━━ Live Chat: Send Message ━━━
+    async function sendLiveMessage(text: string): Promise<void> {
+      addMessage(text, 'user');
+
+      const sessionId = getSessionId();
+      const visitorToken = getVisitorToken();
+
+      if (!sessionId) return;
+
+      try {
+        await fetch('/api/chat/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, visitorToken, message: text }),
+        });
+      } catch (e) {
+        console.warn('Failed to send live message:', e);
+      }
+    }
+
+    // ━━━ Live Chat: Poll for Admin Messages ━━━
+    function startPolling(): void {
+      if (pollInterval) return;
+
+      pollInterval = setInterval(async () => {
+        const sessionId = getSessionId();
+        const visitorToken = getVisitorToken();
+        if (!sessionId) return;
+
+        try {
+          const res = await fetch(
+            `/api/chat/poll?session=${sessionId}&token=${visitorToken}&after=${encodeURIComponent(lastPollTimestamp)}`
+          );
+          const data = await res.json();
+
+          if (data.messages && data.messages.length > 0) {
+            data.messages.forEach((msg: any) => {
+              lastPollTimestamp = msg.created_at;
+              addMessage(msg.message, 'admin');
+            });
+          }
+
+          // Check if session was closed by admin
+          if (data.sessionStatus === 'closed') {
+            stopPolling();
+            addMessage("This chat session has ended. Thank you for chatting with us! 👋", 'system');
+            setMode('bot');
+            ss(SK.sessionId, '');
+            showQuickReplies(['Get a quote', 'Product range', 'Contact team']);
+          }
+        } catch (e) {
+          console.warn('Poll error:', e);
+        }
+      }, 3000);
+    }
+
+    function stopPolling(): void {
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
+
+    // ━━━ Handle User Message ━━━
+    function handleUserMessage(text: string): void {
+      const mode = getMode();
+
+      if (mode === 'live') {
+        sendLiveMessage(text);
+        return;
+      }
+
+      // Bot mode
+      addMessage(text, 'user');
+      if (quickContainer) quickContainer.innerHTML = '';
+      showTyping();
+
+      const delay = 800 + Math.random() * 700;
+      setTimeout(() => {
+        hideTyping();
+        const response = findBotResponse(text);
+
+        // Special: human request
+        if (response.answer === '__REQUEST_HUMAN__') {
+          requestHuman();
+          return;
+        }
+
+        addMessage(response.answer, 'bot');
+        setTimeout(() => showQuickReplies(response.followUp), 300);
+      }, delay);
+    }
+
+    // ━━━ Restore History ━━━
+    function restoreHistory(): void {
+      if (!messages) return;
+      const history = getMsgHistory();
+      if (history.length === 0) return;
+
+      messages.innerHTML = '';
+      history.forEach(msg => renderMessage(msg.text, msg.sender, msg.time));
+      messages.scrollTop = messages.scrollHeight;
+      notification?.classList.add('hidden');
+    }
+
+    // ━━━ Open/Close Chat ━━━
+    function openChat(): void {
+      isOpen = true;
+      ss(SK.wasOpen, 'true');
+      chatWindow?.classList.remove('opacity-0', 'scale-95', 'translate-y-4', 'pointer-events-none');
+      chatWindow?.classList.add('opacity-100', 'scale-100', 'translate-y-0', 'pointer-events-auto');
+      chatWindow?.setAttribute('aria-hidden', 'false');
+      iconOpen?.classList.add('opacity-0', 'rotate-90', 'scale-0');
+      iconClose?.classList.remove('opacity-0');
+      iconClose?.classList.add('rotate-0', 'scale-100');
+      notification?.classList.add('hidden');
+
+      if (!ss(SK.hasOpened)) {
+        ss(SK.hasOpened, 'true');
+        setTimeout(() => {
+          addMessage("Hello! 👋 Welcome to **Reve Stitching**!\n\nI'm your virtual assistant. I can help you with:\n\n• Product information & MOQ\n• Pricing & quotes\n• Quality standards & certifications\n• Lead times & delivery\n\nHow can I help you today?", 'bot');
+          showQuickReplies();
+        }, 400);
+      } else {
+        const history = getMsgHistory();
+        if (history.length > 0) {
+          const lastBot = [...history].reverse().find(m => m.sender === 'bot');
+          if (lastBot) {
+            const r = findBotResponse(lastBot.text);
+            if (r.answer !== '__REQUEST_HUMAN__') showQuickReplies(r.followUp);
+          } else {
+            showQuickReplies();
+          }
+        }
+      }
+
+      input?.focus();
+    }
+
+    function closeChat(): void {
+      isOpen = false;
+      ss(SK.wasOpen, 'false');
+      chatWindow?.classList.add('opacity-0', 'scale-95', 'translate-y-4', 'pointer-events-none');
+      chatWindow?.classList.remove('opacity-100', 'scale-100', 'translate-y-0', 'pointer-events-auto');
+      chatWindow?.setAttribute('aria-hidden', 'true');
+      iconOpen?.classList.remove('opacity-0', 'rotate-90', 'scale-0');
+      iconClose?.classList.add('opacity-0');
+      iconClose?.classList.remove('rotate-0', 'scale-100');
+    }
+
+    // ━━━ Init ━━━
+    function initChat(): void {
+      if (ss(SK.hasOpened) && getMsgHistory().length > 0) {
+        restoreHistory();
+        notification?.classList.add('hidden');
+
+        // Resume live mode polling
+        if (getMode() === 'live' && getSessionId()) {
+          startPolling();
+        }
+
+        if (ss(SK.wasOpen) === 'true') openChat();
+      }
+    }
+
+    // ━━━ Event Listeners ━━━
+    toggle?.addEventListener('click', () => { isOpen ? closeChat() : openChat(); });
+    minimize?.addEventListener('click', closeChat);
+
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = input?.value?.trim();
+      if (!text) return;
+      handleUserMessage(text);
+      if (input) input.value = '';
+    });
+
+    humanBtn?.addEventListener('click', () => {
+      handleUserMessage('I want to talk to a human representative');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) closeChat();
+    });
+
+    // ━━━ Boot ━━━
+    initChat();
+
+  });
+</script>

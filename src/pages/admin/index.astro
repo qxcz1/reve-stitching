@@ -1,0 +1,159 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAuthClient } from '../../lib/supabase';
+
+export const prerender = false;
+
+const token = Astro.locals.adminToken;
+const supabase = getAuthClient(token);
+
+// Fetch contact submissions
+const { data: contacts } = await supabase
+  .from('contact_submissions')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(50);
+
+// Fetch chat sessions
+const { data: sessions } = await supabase
+  .from('chat_sessions')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(50);
+
+// Stats
+const newContacts = contacts?.filter(c => c.status === 'new').length || 0;
+const waitingChats = sessions?.filter(s => s.status === 'waiting').length || 0;
+const activeChats = sessions?.filter(s => s.status === 'active').length || 0;
+---
+
+<AdminLayout title="Dashboard">
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-xl border border-zinc-200 p-5">
+      <p class="text-sm text-zinc-500">Total Contacts</p>
+      <p class="text-3xl font-bold text-zinc-900 mt-1">{contacts?.length || 0}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-zinc-200 p-5">
+      <p class="text-sm text-zinc-500">New (Unread)</p>
+      <p class="text-3xl font-bold text-blue-600 mt-1">{newContacts}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-zinc-200 p-5">
+      <p class="text-sm text-zinc-500">Waiting Chats</p>
+      <p class="text-3xl font-bold text-amber-600 mt-1">{waitingChats}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-zinc-200 p-5">
+      <p class="text-sm text-zinc-500">Active Chats</p>
+      <p class="text-3xl font-bold text-green-600 mt-1">{activeChats}</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- Chat Sessions -->
+    <div>
+      <h2 class="text-lg font-semibold text-zinc-900 mb-4">💬 Live Chat Sessions</h2>
+      <div class="space-y-3">
+        {(!sessions || sessions.length === 0) && (
+          <div class="bg-white rounded-xl border border-zinc-200 p-6 text-center text-zinc-400 text-sm">
+            No chat sessions yet.
+          </div>
+        )}
+        {sessions?.map((session) => (
+          <a
+            href={`/admin/chat/${session.id}`}
+            class="block bg-white rounded-xl border border-zinc-200 p-4 hover:border-primary/50 hover:shadow-md transition-all"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-zinc-900">
+                  {session.visitor_name || 'Anonymous Visitor'}
+                </span>
+                <span class:list={[
+                  'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
+                  session.status === 'waiting' && 'bg-amber-100 text-amber-700',
+                  session.status === 'active' && 'bg-green-100 text-green-700',
+                  session.status === 'closed' && 'bg-zinc-100 text-zinc-500',
+                ]}>
+                  {session.status}
+                </span>
+              </div>
+              <span class="text-xs text-zinc-400">
+                {new Date(session.created_at).toLocaleString()}
+              </span>
+            </div>
+            {session.visitor_email && (
+              <p class="text-xs text-zinc-500">{session.visitor_email}</p>
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Contact Submissions -->
+    <div>
+      <h2 class="text-lg font-semibold text-zinc-900 mb-4">📧 Contact Submissions</h2>
+      <div class="space-y-3">
+        {(!contacts || contacts.length === 0) && (
+          <div class="bg-white rounded-xl border border-zinc-200 p-6 text-center text-zinc-400 text-sm">
+            No submissions yet.
+          </div>
+        )}
+        {contacts?.map((contact) => (
+          <div class="bg-white rounded-xl border border-zinc-200 p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-zinc-900">{contact.name}</span>
+              <div class="flex items-center gap-2">
+                <span class:list={[
+                  'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
+                  contact.status === 'new' && 'bg-blue-100 text-blue-700',
+                  contact.status === 'read' && 'bg-zinc-100 text-zinc-500',
+                  contact.status === 'replied' && 'bg-green-100 text-green-700',
+                ]}>
+                  {contact.status}
+                </span>
+                <span class="text-xs text-zinc-400">
+                  {new Date(contact.created_at).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <p class="text-xs text-zinc-500 mb-1">{contact.email} {contact.company ? `• ${contact.company}` : ''}</p>
+            <p class="text-sm font-medium text-zinc-700 mb-1">{contact.subject}</p>
+            <p class="text-sm text-zinc-600 line-clamp-2">{contact.message}</p>
+
+            {contact.status === 'new' && (
+              <button
+                data-contact-id={contact.id}
+                class="mark-read-btn mt-3 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary hover:text-white transition-colors"
+              >
+                Mark as Read
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-contact-id');
+        const res = await fetch('/api/admin/contact-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: 'read' }),
+        });
+        if (res.ok) {
+          btn.textContent = '✓ Read';
+          btn.disabled = true;
+          btn.classList.remove('text-primary', 'border-primary/30', 'hover:bg-primary', 'hover:text-white');
+          btn.classList.add('text-zinc-400', 'border-zinc-200');
+        }
+      });
+    });
+  </script>
+
+</AdminLayout>

@@ -1,0 +1,65 @@
+---
+import '../styles/global.css';
+
+export const prerender = false;
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} | Reve Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-zinc-50 min-h-screen font-[Inter,sans-serif]">
+
+    <!-- Admin Navigation -->
+    <nav class="bg-white border-b border-zinc-200 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-8">
+            <a href="/admin" class="text-lg font-bold text-zinc-900">
+              🏭 <span class="text-primary">Reve</span> Admin
+            </a>
+            <div class="hidden sm:flex items-center gap-1">
+              <a
+                href="/admin"
+                class:list={[
+                  'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  currentPath === '/admin'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-zinc-600 hover:bg-zinc-100',
+                ]}
+              >
+                Dashboard
+              </a>
+            </div>
+          </div>
+          <button
+            onclick="fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/admin/login')"
+            class="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <slot />
+    </main>
+
+  </body>
+</html>
