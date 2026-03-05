@@ -1083,6 +1083,10 @@ const stepLabels = ["Product", "Specs", "Customize", "Delivery", "Contact"];
 async function submitQuote() {
   const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
   
+  // Disable button and show loading
+  btnNext.disabled = true;
+  btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Submitting…`;
+  
   // Build JSON payload (NO files for now)
   const payload = {
     selectedProduct: formData.selectedProduct,
