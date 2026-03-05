@@ -1080,39 +1080,92 @@ const stepLabels = ["Product", "Specs", "Customize", "Delivery", "Contact"];
       });
     }
 
-async function submitQuote() {
+aasync function submitQuote() {
   const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
   
   // Disable button and show loading
   btnNext.disabled = true;
   btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Submitting…`;
   
-  // Build JSON payload (NO files for now)
-  const payload = {
-    selectedProduct: formData.selectedProduct,
-    fabricType: formData.fabricType,
-    gsmRange: String(formData.gsmRange),
-    quantity: String(formData.quantity),
-    sizeRange: JSON.stringify(formData.sizeRange),
-    colorQuantity: String(formData.colorQuantity),
-    customizations: JSON.stringify(formData.customizations),
-    sampleRequired: String(formData.sampleRequired),
-    rushOrder: String(formData.rushOrder),
-    deliveryDate: formData.deliveryDate,
-    shippingDestination: formData.shippingDestination,
-    companyName: formData.companyName,
-    contactPerson: formData.contactPerson,
-    email: formData.email,
-    phone: formData.phone,
-    additionalNotes: formData.additionalNotes,
-  };
-
   try {
+    // ── Step 1: Upload files first ──
+    let techPackUrl: string | null = null;
+    const referenceImageUrls: string[] = [];
+    const tempRef = 'TEMP-' + Date.now();
+
+    // Upload tech pack
+    if (formData.techPackFiles.length > 0) {
+      btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Uploading tech pack…`;
+      
+      const uploadData = new FormData();
+      uploadData.append('file', formData.techPackFiles[0]);
+      uploadData.append('folder', 'techpack');
+      uploadData.append('ref', tempRef);
+
+      const uploadRes = await fetch('/api/quote/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+
+      if (uploadRes.ok) {
+        const uploadResult = await uploadRes.json();
+        if (uploadResult.success) {
+          techPackUrl = uploadResult.path;
+        }
+      }
+    }
+
+    // Upload reference images
+    if (formData.referenceImages.length > 0) {
+      btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Uploading images…`;
+      
+      for (const imgFile of formData.referenceImages) {
+        const uploadData = new FormData();
+        uploadData.append('file', imgFile);
+        uploadData.append('folder', 'images');
+        uploadData.append('ref', tempRef);
+
+        const uploadRes = await fetch('/api/quote/upload', {
+          method: 'POST',
+          body: uploadData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadResult = await uploadRes.json();
+          if (uploadResult.success) {
+            referenceImageUrls.push(uploadResult.path);
+          }
+        }
+      }
+    }
+
+    // ── Step 2: Submit quote with file URLs ──
+    btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Processing…`;
+
+    const payload = {
+      selectedProduct: formData.selectedProduct,
+      fabricType: formData.fabricType,
+      gsmRange: String(formData.gsmRange),
+      quantity: String(formData.quantity),
+      sizeRange: JSON.stringify(formData.sizeRange),
+      colorQuantity: String(formData.colorQuantity),
+      customizations: JSON.stringify(formData.customizations),
+      sampleRequired: String(formData.sampleRequired),
+      rushOrder: String(formData.rushOrder),
+      deliveryDate: formData.deliveryDate,
+      shippingDestination: formData.shippingDestination,
+      companyName: formData.companyName,
+      contactPerson: formData.contactPerson,
+      email: formData.email,
+      phone: formData.phone,
+      additionalNotes: formData.additionalNotes,
+      techPackUrl: techPackUrl,
+      referenceImageUrls: referenceImageUrls,
+    };
+
     const res = await fetch('/api/quote/submit', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
