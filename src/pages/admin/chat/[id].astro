@@ -34,6 +34,12 @@ if (session.status === 'waiting') {
     .eq('id', id);
   session.status = 'active';
 }
+
+// Pre-compute for client script
+const ssrMessageIds = (messages || []).map((m: any) => m.id);
+const lastMsgTime = messages && messages.length > 0
+  ? messages[messages.length - 1].created_at
+  : new Date().toISOString();
 ---
 
 <AdminLayout title={`Chat — ${session.visitor_name || 'Visitor'}`}>
@@ -75,7 +81,7 @@ if (session.status === 'waiting') {
 
     <div id="admin-messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
       {(!messages || messages.length === 0) && (
-        <p class="text-center text-zinc-400 text-sm py-8">No messages yet.</p>
+        <p id="no-messages-placeholder" class="text-center text-zinc-400 text-sm py-8">No messages yet.</p>
       )}
       {messages?.map((msg) => (
         <div class={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
@@ -131,6 +137,8 @@ if (session.status === 'waiting') {
   supabaseKey: supabaseConfig.anonKey,
   adminToken: token,
   sessionStatus: session.status,
+  ssrMessageIds,
+  lastMsgTime,
 }}>
   (async () => {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm');
@@ -146,24 +154,25 @@ if (session.status === 'waiting') {
     const input = document.getElementById('admin-chat-input');
     const closeBtn = document.getElementById('close-session-btn');
 
-    // ✅ Track message IDs to prevent duplicates
-    const renderedMessages = new Set();
+    // ━━━ Track ALL rendered message IDs (SSR + dynamic) ━━━
+    const renderedIds = new Set(ssrMessageIds);
+    let lastCheck = lastMsgTime;
 
     function scrollToBottom() {
       if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
     scrollToBottom();
 
-    function appendMessage(text, sender, timestamp, messageId) {
+    function appendMessage(text, sender, timestamp) {
       if (!messagesDiv) return;
-      
-      // ✅ Prevent duplicate rendering
-      if (messageId && renderedMessages.has(messageId)) return;
-      if (messageId) renderedMessages.add(messageId);
 
-      const div = document.createElement('div');
+      // Remove placeholder if exists
+      var ph = document.getElementById('no-messages-placeholder');
+      if (ph) ph.remove();
+
+      var div = document.createElement('div');
       div.className = 'flex ' + (sender === 'admin' ? 'justify-end' : 'justify-start');
-      const time = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      var time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       div.innerHTML =
         '<div class="max-w-[70%]">' +
           '<div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
@@ -179,61 +188,81 @@ if (session.status === 'waiting') {
       scrollToBottom();
     }
 
-    // ✅ Mark existing messages as already rendered (from SSR)
-    if (messagesDiv) {
-      const existingDivs = messagesDiv.querySelectorAll('.flex');
-      existingDivs.forEach(() => {
-        // We can't get message IDs from SSR, so we'll track by content hash
-        // This is a simple workaround - real-time messages have IDs
-      });
-    }
-
+    // ━━━ Send Message (optimistic) ━━━
     if (form && input) {
-      form.addEventListener('submit', async (e) => {
+      form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const text = input.value.trim();
+        var text = input.value.trim();
         if (!text) return;
-
         input.value = '';
-        
-        // ✅ Optimistic UI update (don't wait for database)
-        appendMessage(text, 'admin', new Date().toISOString(), 'temp-' + Date.now());
+        input.focus();
 
-        await supabase.from('chat_messages').insert({
-          session_id: sessionId,
-          sender: 'admin',
-          message: text,
-        });
+        // Show immediately
+        appendMessage(text, 'admin', new Date().toISOString());
+
+        // Save to DB and get ID
+        try {
+          var result = await supabase
+            .from('chat_messages')
+            .insert({
+              session_id: sessionId,
+              sender: 'admin',
+              message: text,
+            })
+            .select('id, created_at')
+            .single();
+
+          if (result.data) {
+            renderedIds.add(result.data.id);
+            if (result.data.created_at > lastCheck) {
+              lastCheck = result.data.created_at;
+            }
+          }
+        } catch (err) {
+          console.warn('Send failed:', err);
+        }
       });
     }
 
-    // ✅ Real-time subscription (only for NEW messages)
+    // ━━━ Poll for New Visitor Messages (every 2s) ━━━
     if (sessionStatus !== 'closed') {
-      supabase
-        .channel('admin-chat-' + sessionId)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: 'session_id=eq.' + sessionId,
-        }, (payload) => {
-          // ✅ Only render visitor messages (admin's are already shown optimistically)
-          if (payload.new.sender === 'visitor') {
-            appendMessage(
-              payload.new.message, 
-              'visitor', 
-              payload.new.created_at,
-              payload.new.id  // ✅ Use real message ID
-            );
+      setInterval(async function() {
+        try {
+          var result = await supabase
+            .from('chat_messages')
+            .select('id, sender, message, created_at')
+            .eq('session_id', sessionId)
+            .gt('created_at', lastCheck)
+            .order('created_at', { ascending: true });
+
+          var newMsgs = result.data;
+          if (newMsgs && newMsgs.length > 0) {
+            for (var i = 0; i < newMsgs.length; i++) {
+              var msg = newMsgs[i];
+
+              // Always advance the timestamp
+              lastCheck = msg.created_at;
+
+              // Skip already-rendered messages
+              if (renderedIds.has(msg.id)) continue;
+              renderedIds.add(msg.id);
+
+              // Only render VISITOR messages
+              // (admin messages are already shown via optimistic UI)
+              if (msg.sender === 'visitor') {
+                appendMessage(msg.message, msg.sender, msg.created_at);
+              }
+            }
           }
-        })
-        .subscribe((status) => {
-          console.log('Subscription status:', status);
-        });
+        } catch (err) {
+          console.warn('Poll error:', err);
+        }
+      }, 2000);
     }
 
+    // ━━━ Close Session ━━━
     if (closeBtn) {
-      closeBtn.addEventListener('click', async () => {
+      closeBtn.addEventListener('click', async function() {
         if (!confirm('Close this chat session?')) return;
 
         await supabase

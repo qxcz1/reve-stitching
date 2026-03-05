@@ -173,7 +173,8 @@
 
     let isOpen = false;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
-    let lastPollTimestamp = '1970-01-01T00:00:00Z';
+    let lastPollTimestamp = new Date().toISOString();
+    const seenMessageIds = new Set();
 
     // ━━━ Session Storage Keys ━━━
     const SK = {
@@ -702,7 +703,7 @@
     }
 
     // ━━━ Live Chat: Poll for Admin Messages ━━━
-    function startPolling(): void {
+       function startPolling(): void {
       if (pollInterval) return;
 
       pollInterval = setInterval(async () => {
@@ -718,8 +719,27 @@
 
           if (data.messages && data.messages.length > 0) {
             data.messages.forEach((msg: any) => {
+              // ✅ Skip messages we already showed
+              if (seenMessageIds.has(msg.id)) return;
+              seenMessageIds.add(msg.id);
+
+              // ✅ Update timestamp to latest message
               lastPollTimestamp = msg.created_at;
-              addMessage(msg.message, 'admin');
+
+              // ✅ Render but DON'T save to sessionStorage (prevent duplicates)
+              renderMessage(msg.message, 'admin', new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+              if (messages) messages.scrollTop = messages.scrollHeight;
+
+              // ✅ Save separately with ID tracking
+              try {
+                const h: ChatMsg[] = JSON.parse(ss(SK.messages) || '[]');
+                // Check if already saved
+                const alreadySaved = h.some(m => m.text === msg.message && m.sender === 'admin');
+                if (!alreadySaved) {
+                  h.push({ text: msg.message, sender: 'admin', time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+                  ss(SK.messages, JSON.stringify(h));
+                }
+              } catch {}
             });
           }
 
@@ -728,14 +748,14 @@
             stopPolling();
             addMessage("This chat session has ended. Thank you for chatting with us! 👋", 'system');
             setMode('bot');
-            
+
             // Clear all chat data
             sessionStorage.removeItem(SK.sessionId);
             sessionStorage.removeItem(SK.messages);
             sessionStorage.removeItem(SK.hasOpened);
             sessionStorage.removeItem(SK.wasOpen);
             sessionStorage.removeItem(SK.mode);
-            
+
             // Show fresh quick replies
             showQuickReplies(['Get a quote', 'Product range', 'Contact team']);
           }
@@ -809,18 +829,20 @@
           addMessage("Hello! 👋 Welcome to **Reve Stitching**!\n\nI'm your virtual assistant. I can help you with:\n\n• Product information & MOQ\n• Pricing & quotes\n• Quality standards & certifications\n• Lead times & delivery\n\nHow can I help you today?", 'bot');
           showQuickReplies();
         }, 400);
-      } else {
-        const history = getMsgHistory();
-        if (history.length > 0) {
-          const lastBot = [...history].reverse().find(m => m.sender === 'bot');
-          if (lastBot) {
-            const r = findBotResponse(lastBot.text);
-            if (r.answer !== '__REQUEST_HUMAN__') showQuickReplies(r.followUp);
-          } else {
-            showQuickReplies();
+           } else {
+        // Don't show quick replies during live chat
+        if (getMode() !== 'live') {
+          const history = getMsgHistory();
+          if (history.length > 0) {
+            const lastBot = [...history].reverse().find(m => m.sender === 'bot');
+            if (lastBot) {
+              const r = findBotResponse(lastBot.text);
+              if (r.answer !== '__REQUEST_HUMAN__') showQuickReplies(r.followUp);
+            } else {
+              showQuickReplies();
+            }
           }
         }
-      }
 
       input?.focus();
     }
