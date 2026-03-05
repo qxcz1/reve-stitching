@@ -4,10 +4,7 @@ import vercel from '@astrojs/vercel/serverless';
 
 export default defineConfig({
   output: 'hybrid',
-  adapter: vercel({
-    // Don't specify runtime — let adapter handle it
-    includeFiles: [],
-  }),
+  adapter: vercel(),
   integrations: [
     tailwind({ applyBaseStyles: false }),
   ],
