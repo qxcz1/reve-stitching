@@ -102,6 +102,25 @@ CONTACT:
 - Response time: Within 24 hours (same day during business hours)`;
 
 export const POST: APIRoute = async ({ request }) => {
+    // Simple rate limiting: max 10 requests per minute per IP
+    const clientIP = request.headers.get('x-forwarded-for') || 'unknown';
+    const now = Date.now();
+    
+    if (!global.rateLimitMap) global.rateLimitMap = new Map();
+    const userRequests = global.rateLimitMap.get(clientIP) || [];
+    const recentRequests = userRequests.filter((time: number) => now - time < 60000);
+    
+    if (recentRequests.length >= 10) {
+      return new Response(JSON.stringify({ 
+        error: 'Too many requests. Please wait a moment.' 
+      }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    recentRequests.push(now);
+    global.rateLimitMap.set(clientIP, recentRequests);
   try {
     const { message, history } = await request.json();
 
@@ -141,7 +160,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
