@@ -27,7 +27,7 @@ export async function notifyNewContact(data: ContactData) {
     
     const result = await resend.emails.send({
       from: 'onboarding@resend.dev',
-      to: 'hamzali.revesystems@gmail.com',
+      to: 'opgaming8765@gmail.com',
       subject: `🔔 New Contact: ${data.subject}`,
       html: `
         <h2>New Contact Form Submission</h2>
@@ -91,7 +91,7 @@ export async function notifyNewChat(data: ChatData) {
     
     const result = await resend.emails.send({
       from: 'onboarding@resend.dev',
-      to: 'hamzali.revesystems@gmail.com',
+      to: 'opgaming8765@gmail.com',
       subject: '💬 New Live Chat Request',
       html: `
         <h2>Someone Requested Live Chat</h2>
