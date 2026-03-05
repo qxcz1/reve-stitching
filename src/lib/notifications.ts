@@ -20,7 +20,7 @@ interface ContactData {
     try {
       await resend.emails.send({
         from: 'notifications@revestitching.com',
-        to: 'haroon@revestitching.com',
+        to: 'hamzali.revesystems@gmail.com',
         subject: `🔔 New Contact: ${data.subject}`,
         html: `
           <h2>New Contact Form Submission</h2>
