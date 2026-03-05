@@ -61,6 +61,63 @@ export const POST: APIRoute = async ({ request }) => {
     const reference_number = await generateReferenceNumber();
     console.log(`[Quote] Processing ${reference_number} from ${company_name}`);
 
+        // ── Upload files from Base64 ──
+        const supabase = getSupabase();
+        let tech_pack_url: string | null = null;
+        const reference_images: string[] = [];
+    
+        // Upload tech pack if provided
+        if (body.techPackBase64 && body.techPackName) {
+          try {
+            const buffer = Buffer.from(body.techPackBase64, 'base64');
+            const safeName = (body.techPackName as string).replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_{2,}/g, '_');
+            const path = `${reference_number}/techpack/${Date.now()}_${safeName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('quote-uploads')
+              .upload(path, buffer, {
+                contentType: 'application/pdf',
+                upsert: false,
+              });
+            
+            if (!uploadError) {
+              tech_pack_url = path;
+              console.log(`[Quote] Tech pack uploaded: ${path}`);
+            } else {
+              console.error('[Quote] Tech pack upload failed:', uploadError.message);
+            }
+          } catch (err) {
+            console.error('[Quote] Tech pack upload error:', err);
+          }
+        }
+    
+        // Upload reference images if provided
+        if (body.referenceImagesBase64 && Array.isArray(body.referenceImagesBase64)) {
+          for (let i = 0; i < body.referenceImagesBase64.length; i++) {
+            try {
+              const buffer = Buffer.from(body.referenceImagesBase64[i], 'base64');
+              const safeName = (body.referenceImageNames[i] as string).replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_{2,}/g, '_');
+              const path = `${reference_number}/images/${Date.now()}_${i}_${safeName}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('quote-uploads')
+                .upload(path, buffer, {
+                  contentType: 'image/jpeg',
+                  upsert: false,
+                });
+              
+              if (!uploadError) {
+                reference_images.push(path);
+                console.log(`[Quote] Image ${i + 1} uploaded: ${path}`);
+              } else {
+                console.error(`[Quote] Image ${i + 1} upload failed:`, uploadError.message);
+              }
+            } catch (err) {
+              console.error(`[Quote] Image ${i + 1} upload error:`, err);
+            }
+          }
+        }
+
     // AI summary
     let ai_summary: string | null = null;
     let estimated_price_range: string | null = null;
@@ -80,9 +137,6 @@ export const POST: APIRoute = async ({ request }) => {
     } catch (err) {
       console.error('[Quote] AI summary failed:', err);
     }
-
-    // Insert into database
-    const supabase = getSupabase();
 
     const { data: inserted, error: dbError } = await supabase
       .from('quote_requests')
@@ -105,8 +159,8 @@ export const POST: APIRoute = async ({ request }) => {
         email,
         phone,
         notes,
-        tech_pack_url: body.techPackUrl || null,
-    reference_images: body.referenceImageUrls || [],
+        tech_pack_url,
+        reference_images,
         ai_summary,
         estimated_price_range,
         suggested_moq,

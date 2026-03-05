@@ -1084,54 +1084,28 @@ async function submitQuote() {
   const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
   
   btnNext.disabled = true;
-  btnNext.innerHTML = '<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"></path></svg> Submitting\u2026';
+  btnNext.textContent = 'Processing files…';
   
   try {
-    // ── Step 1: Upload files ──
-    let techPackUrl: string | null = null;
-    const referenceImageUrls: string[] = [];
-    const tempRef = 'TEMP-' + Date.now();
-
-    // Upload tech pack
+    // ── Convert files to Base64 ──
+    let techPackBase64: string | null = null;
+    let techPackName: string | null = null;
+    
     if (formData.techPackFiles.length > 0) {
-      btnNext.textContent = 'Uploading tech pack\u2026';
-      const fd = new FormData();
-      fd.append('file', formData.techPackFiles[0]);
-      fd.append('folder', 'techpack');
-      fd.append('ref', tempRef);
-      try {
-        const upRes = await fetch('/api/quote/upload', { method: 'POST', body: fd });
-        if (upRes.ok) {
-          const upData = await upRes.json();
-          if (upData.success) techPackUrl = upData.path;
-        }
-      } catch (e) {
-        console.warn('Tech pack upload failed:', e);
-      }
+      const file = formData.techPackFiles[0];
+      techPackBase64 = await fileToBase64(file);
+      techPackName = file.name;
+    }
+    
+    const referenceImagesBase64: string[] = [];
+    const referenceImageNames: string[] = [];
+    
+    for (const img of formData.referenceImages) {
+      referenceImagesBase64.push(await fileToBase64(img));
+      referenceImageNames.push(img.name);
     }
 
-    // Upload reference images
-    if (formData.referenceImages.length > 0) {
-      for (let i = 0; i < formData.referenceImages.length; i++) {
-        btnNext.textContent = 'Uploading image ' + (i + 1) + ' of ' + formData.referenceImages.length + '\u2026';
-        const fd = new FormData();
-        fd.append('file', formData.referenceImages[i]);
-        fd.append('folder', 'images');
-        fd.append('ref', tempRef);
-        try {
-          const upRes = await fetch('/api/quote/upload', { method: 'POST', body: fd });
-          if (upRes.ok) {
-            const upData = await upRes.json();
-            if (upData.success) referenceImageUrls.push(upData.path);
-          }
-        } catch (e) {
-          console.warn('Image upload failed:', e);
-        }
-      }
-    }
-
-    // ── Step 2: Submit quote with file URLs ──
-    btnNext.textContent = 'Processing\u2026';
+    btnNext.textContent = 'Submitting…';
 
     const payload = {
       selectedProduct: formData.selectedProduct,
@@ -1150,8 +1124,10 @@ async function submitQuote() {
       email: formData.email,
       phone: formData.phone,
       additionalNotes: formData.additionalNotes,
-      techPackUrl: techPackUrl,
-      referenceImageUrls: referenceImageUrls,
+      techPackBase64: techPackBase64,
+      techPackName: techPackName,
+      referenceImagesBase64: referenceImagesBase64,
+      referenceImageNames: referenceImageNames,
     };
 
     const res = await fetch('/api/quote/submit', {
@@ -1166,7 +1142,6 @@ async function submitQuote() {
       throw new Error(result.error || 'Submission failed');
     }
 
-    // Show success screen
     const refNumber = document.getElementById('ref-number');
     if (refNumber) refNumber.textContent = result.referenceNumber;
     buildSummary();
@@ -1177,6 +1152,19 @@ async function submitQuote() {
     btnNext.disabled = false;
     btnNext.innerHTML = 'Submit Quote <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>';
   }
+}
+
+// Helper function to convert File to Base64
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1]; // Remove data:image/png;base64, prefix
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
     // ───────────────── BUTTON HANDLERS ─────────────────
