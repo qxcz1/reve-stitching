@@ -1081,38 +1081,35 @@ const stepLabels = ["Product", "Specs", "Customize", "Delivery", "Contact"];
     }
 
 async function submitQuote() {
-  const payload = new FormData();
-
-  // Text fields
-  payload.append('selectedProduct', formData.selectedProduct);
-  payload.append('fabricType', formData.fabricType);
-  payload.append('gsmRange', String(formData.gsmRange));
-  payload.append('quantity', String(formData.quantity));
-  payload.append('sizeRange', JSON.stringify(formData.sizeRange));
-  payload.append('colorQuantity', String(formData.colorQuantity));
-  payload.append('customizations', JSON.stringify(formData.customizations));
-  payload.append('sampleRequired', String(formData.sampleRequired));
-  payload.append('rushOrder', String(formData.rushOrder));
-  payload.append('deliveryDate', formData.deliveryDate);
-  payload.append('shippingDestination', formData.shippingDestination);
-  payload.append('companyName', formData.companyName);
-  payload.append('contactPerson', formData.contactPerson);
-  payload.append('email', formData.email);
-  payload.append('phone', formData.phone);
-  payload.append('additionalNotes', formData.additionalNotes);
-
-  // Files
-  if (formData.techPackFiles.length > 0) {
-    payload.append('techPack', formData.techPackFiles[0]);
-  }
-  formData.referenceImages.forEach((file) => {
-    payload.append('referenceImages', file);
-  });
+  const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
+  
+  // Build JSON payload (NO files for now)
+  const payload = {
+    selectedProduct: formData.selectedProduct,
+    fabricType: formData.fabricType,
+    gsmRange: String(formData.gsmRange),
+    quantity: String(formData.quantity),
+    sizeRange: JSON.stringify(formData.sizeRange),
+    colorQuantity: String(formData.colorQuantity),
+    customizations: JSON.stringify(formData.customizations),
+    sampleRequired: String(formData.sampleRequired),
+    rushOrder: String(formData.rushOrder),
+    deliveryDate: formData.deliveryDate,
+    shippingDestination: formData.shippingDestination,
+    companyName: formData.companyName,
+    contactPerson: formData.contactPerson,
+    email: formData.email,
+    phone: formData.phone,
+    additionalNotes: formData.additionalNotes,
+  };
 
   try {
     const res = await fetch('/api/quote/submit', {
       method: 'POST',
-      body: payload,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
 
     const result = await res.json();

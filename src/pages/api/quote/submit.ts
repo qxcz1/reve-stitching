@@ -64,44 +64,117 @@ function validateFormData(data: Record<string, any>): ValidationResult {
 // ─── POST Handler ───
 
 export const POST: APIRoute = async ({ request }) => {
-  const json = (body: QuoteSubmitResponse, status = 200) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
-    });
-
-  try {
-    // ── 1. Parse form data ──
-
-    const formData = await request.formData();
-
-    const parseJsonField = (key: string, fallback: any = []) => {
-      const raw = formData.get(key) as string | null;
-      if (!raw) return fallback;
-      try { return JSON.parse(raw); } catch { return fallback; }
-    };
-
-    const fields = {
-      product_type:   (formData.get('selectedProduct') as string || '').trim(),
-      fabric_type:    (formData.get('fabricType') as string || '').trim(),
-      gsm:            Number(formData.get('gsmRange')) || 0,
-      quantity:       Number(formData.get('quantity')) || 0,
-      sizes:          parseJsonField('sizeRange', []),
-      color_count:    Number(formData.get('colorQuantity')) || 1,
-      customizations: parseJsonField('customizations', []),
-      has_sample:     formData.get('sampleRequired') === 'true',
-      is_rush:        formData.get('rushOrder') === 'true',
-      target_date:    (formData.get('deliveryDate') as string || '').trim(),
-      destination:    (formData.get('shippingDestination') as string || '').trim(),
-      company_name:   (formData.get('companyName') as string || '').trim(),
-      contact_person: (formData.get('contactPerson') as string || '').trim(),
-      email:          (formData.get('email') as string || '').trim().toLowerCase(),
-      phone:          (formData.get('phone') as string || '').trim() || null,
-      notes:          (formData.get('additionalNotes') as string || '').trim() || null,
-    };
+    const json = (body: QuoteSubmitResponse, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: {
+          'Content-Type': 'application/json',
+          ...CORS_HEADERS,
+        },
+      });
+  
+    try {
+      // ── 1. Parse JSON data (not FormData) ──
+      const body = await request.json();
+  
+      const parseJsonField = (val: string, fallback: any = []) => {
+        if (!val) return fallback;
+        try { return JSON.parse(val); } catch { return fallback; }
+      };
+  
+      const fields = {
+        product_type:   (body.selectedProduct || '').trim(),
+        fabric_type:    (body.fabricType || '').trim(),
+        gsm:            Number(body.gsmRange) || 0,
+        quantity:       Number(body.quantity) || 0,
+        sizes:          parseJsonField(body.sizeRange, []),
+        color_count:    Number(body.colorQuantity) || 1,
+        customizations: parseJsonField(body.customizations, []),
+        has_sample:     body.sampleRequired === 'true',
+        is_rush:        body.rushOrder === 'true',
+        target_date:    (body.deliveryDate || '').trim(),
+        destination:    (body.shippingDestination || '').trim(),
+        company_name:   (body.companyName || '').trim(),
+        contact_person: (body.contactPerson || '').trim(),
+        email:          (body.email || '').trim().toLowerCase(),
+        phone:          (body.phone || '').trim() || null,
+        notes:          (body.additionalNotes || '').trim() || null,
+      };
+  
+      // ── 2. Validate ──
+      const validation = validateFormData(fields);
+      if (!validation.valid) {
+        return json({ success: false, error: 'Validation failed.', errors: validation.errors }, 422);
+      }
+  
+      // ── 3. Generate reference number ──
+      const reference_number = await generateReferenceNumber();
+      console.log(`[Quote] Processing ${reference_number} from ${fields.company_name}`);
+  
+      // ── 4. Skip file uploads for now ──
+      const tech_pack_url: string | null = null;
+      const reference_images: string[] = [];
+  
+      // ── 5. Generate AI summary ──
+      let aiResult = {
+        ai_summary: null as string | null,
+        estimated_price_range: null as string | null,
+        suggested_moq: null as number | null,
+        ai_flags: null as string | null,
+      };
+  
+      try {
+        aiResult = await generateAISummary(fields);
+      } catch (err) {
+        console.error('[Quote] AI summary failed:', err);
+      }
+  
+      // ── 6. Insert into database ──
+      const supabase = getSupabase();
+  
+      const insertPayload = {
+        reference_number,
+        status: 'new' as const,
+        ...fields,
+        tech_pack_url,
+        reference_images,
+        ...aiResult,
+        admin_notes: null,
+        assigned_to: null,
+      };
+  
+      const { data: inserted, error: dbError } = await supabase
+        .from('quote_requests')
+        .insert(insertPayload)
+        .select()
+        .single();
+  
+      if (dbError || !inserted) {
+        console.error('[Quote] Database insert failed:', dbError);
+        return json({ success: false, error: 'Failed to save quote request. Please try again.' }, 500);
+      }
+  
+      console.log(`[Quote] Saved ${reference_number} with id ${inserted.id}`);
+  
+      // ── 7. Send notifications ──
+      const quoteRecord = inserted as QuoteRequest;
+  
+      await Promise.allSettled([
+        notifyNewQuote(quoteRecord),
+        sendQuoteCustomerConfirmation(quoteRecord),
+      ]);
+  
+      // ── 8. Return success ──
+      return json({
+        success: true,
+        referenceNumber: reference_number,
+      });
+  
+    } catch (err) {
+      console.error('[Quote] Unexpected error:', err);
+      return json({ success: false, error: 'An unexpected error occurred. Please try again.' }, 500);
+    }
+  };
 
     // ── 2. Validate ──
 
