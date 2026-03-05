@@ -91,13 +91,14 @@
     <!-- ━━━ Chat Input ━━━ -->
     <div class="px-4 pb-4 pt-2 border-t border-zinc-100 shrink-0">
       <form id="chat-form" class="flex items-center gap-2">
-        <input
+          <textarea
           id="chat-input"
-          type="text"
           placeholder="Type your message..."
           autocomplete="off"
-          class="flex-1 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-        />
+          rows="1"
+          class="flex-1 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none overflow-hidden"
+          style="max-height: 120px;"
+        ></textarea>
         <button
           type="submit"
           class="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-white hover:bg-primary-light transition-colors shrink-0"
@@ -164,7 +165,7 @@
     const minimize = document.getElementById('chat-minimize');
     const messages = document.getElementById('chat-messages');
     const form = document.getElementById('chat-form');
-    const input = document.getElementById('chat-input') as HTMLInputElement;
+    const input = document.getElementById('chat-input') as HTMLTextAreaElement;
     const quickContainer = document.getElementById('quick-replies-container');
     const notification = document.getElementById('chat-notification');
     const iconOpen = document.getElementById('chat-icon-open');
@@ -675,6 +676,7 @@
         addMessage("You're now connected! 🟢 A team member will join this chat shortly.\n\nYou can start typing your questions — they'll see your messages when they connect.\n\n🕐 Typical response: Within a few minutes during business hours (Mon-Sat, 8AM-6PM PKT).", 'system');
 
         startPolling();
+        startHeartbeat();
 
       } catch (e) {
         addMessage("Sorry, I couldn't connect you right now. Please try emailing us at **haroon@revestitching.com** instead.", 'bot');
@@ -746,6 +748,7 @@
           // Check if session was closed by admin
           if (data.sessionStatus === 'closed') {
             stopPolling();
+            stopHeartbeat();
             addMessage("This chat session has ended. Thank you for chatting with us! 👋", 'system');
             setMode('bot');
 
@@ -763,6 +766,32 @@
           console.warn('Poll error:', e);
         }
       }, 3000);
+    }
+
+    // ━━━ Heartbeat: Keep session alive ━━━
+    let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+    function startHeartbeat(): void {
+      if (heartbeatInterval) return;
+      heartbeatInterval = setInterval(async () => {
+        const sessionId = getSessionId();
+        const visitorToken = getVisitorToken();
+        if (!sessionId || getMode() !== 'live') {
+          stopHeartbeat();
+          return;
+        }
+        try {
+          await fetch('/api/chat/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, visitorToken }),
+          });
+        } catch {}
+      }, 15000); // Every 15 seconds
+    }
+
+    function stopHeartbeat(): void {
+      if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
     }
 
     function stopPolling(): void {
@@ -867,6 +896,7 @@
         // Resume live mode polling
         if (getMode() === 'live' && getSessionId()) {
           startPolling();
+          startHeartbeat();
         }
 
         if (ss(SK.wasOpen) === 'true') openChat();
@@ -879,11 +909,22 @@
 
     // NEW: Reset chat button listener
     const resetBtn = document.getElementById('chat-reset-btn');
-    resetBtn?.addEventListener('click', () => {
+        resetBtn?.addEventListener('click', () => {
       if (!confirm('Start a new chat? This will clear your current conversation.')) return;
       
       // Stop polling if in live mode
       stopPolling();
+      stopHeartbeat();
+      
+      // Close the live session if active
+      const sessionId = getSessionId();
+      const visitorToken = getVisitorToken();
+      if (sessionId && getMode() === 'live') {
+        navigator.sendBeacon('/api/chat/close', JSON.stringify({
+          sessionId,
+          visitorToken,
+        }));
+      }
       
       // Clear everything from sessionStorage
       sessionStorage.removeItem(SK.messages);
@@ -891,6 +932,7 @@
       sessionStorage.removeItem(SK.wasOpen);
       sessionStorage.removeItem(SK.mode);
       sessionStorage.removeItem(SK.sessionId);
+      sessionStorage.removeItem(SK.visitorToken);
       
       // Reload page to start fresh
       window.location.reload();
@@ -901,7 +943,25 @@
       const text = input?.value?.trim();
       if (!text) return;
       handleUserMessage(text);
-      if (input) input.value = '';
+      if (input) {
+        input.value = '';
+        input.style.height = 'auto';
+      }
+    });
+
+    // Shift+Enter for new line, Enter to send
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form?.dispatchEvent(new Event('submit'));
+      }
+    });
+
+    // Auto-resize textarea
+    input?.addEventListener('input', () => {
+      if (!input) return;
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
     });
 
     humanBtn?.addEventListener('click', () => {
@@ -910,6 +970,19 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && isOpen) closeChat();
+    });
+
+    // ━━━ Close session on tab close ━━━
+    window.addEventListener('beforeunload', () => {
+      const sessionId = getSessionId();
+      const visitorToken = getVisitorToken();
+      if (sessionId && getMode() === 'live') {
+        // Use sendBeacon for reliability (works even during page unload)
+        navigator.sendBeacon('/api/chat/close', JSON.stringify({
+          sessionId,
+          visitorToken,
+        }));
+      }
     });
 
     // ━━━ Boot ━━━

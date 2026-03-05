@@ -107,13 +107,14 @@ const lastMsgTime = messages && messages.length > 0
     {session.status !== 'closed' ? (
       <div class="px-6 py-4 border-t border-zinc-100">
         <form id="admin-chat-form" class="flex items-center gap-3">
-          <input
-            type="text"
+            <textarea
             id="admin-chat-input"
             placeholder="Type your reply..."
             autocomplete="off"
-            class="flex-1 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-          />
+            rows="1"
+            class="flex-1 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none overflow-hidden"
+            style="max-height: 120px;"
+          ></textarea>
           <button
             type="submit"
             class="px-6 py-3 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary-light transition-colors shrink-0"
@@ -179,7 +180,7 @@ const lastMsgTime = messages && messages.length > 0
             (sender === 'admin'
               ? 'bg-primary text-white rounded-tr-md'
               : 'bg-zinc-100 text-zinc-700 rounded-tl-md') +
-          '">' + text + '</div>' +
+          '">' + text.replace(/\n/g, '<br>') + '</div>' +
           '<span class="text-[10px] text-zinc-400 mt-1 block ' +
             (sender === 'admin' ? 'text-right pr-1' : 'pl-1') +
           '">' + (sender === 'admin' ? 'You' : 'Visitor') + ' • ' + time + '</span>' +
@@ -189,12 +190,27 @@ const lastMsgTime = messages && messages.length > 0
     }
 
     // ━━━ Send Message (optimistic) ━━━
-    if (form && input) {
+        if (form && input) {
+      // Shift+Enter for new line, Enter to send
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          form.dispatchEvent(new Event('submit'));
+        }
+      });
+
+      // Auto-resize textarea
+      input.addEventListener('input', function() {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+      });
+
       form.addEventListener('submit', async function(e) {
         e.preventDefault();
         var text = input.value.trim();
         if (!text) return;
         input.value = '';
+        input.style.height = 'auto';
         input.focus();
 
         // Show immediately
@@ -249,8 +265,23 @@ const lastMsgTime = messages && messages.length > 0
 
               // Only render VISITOR messages
               // (admin messages are already shown via optimistic UI)
-              if (msg.sender === 'visitor') {
+                            if (msg.sender === 'visitor') {
                 appendMessage(msg.message, msg.sender, msg.created_at);
+
+                // Check if visitor left
+                if (msg.message === '(Visitor left the chat)') {
+                  var statusEl = document.getElementById('session-status');
+                  if (statusEl) {
+                    statusEl.textContent = 'closed';
+                    statusEl.className = 'font-medium text-zinc-400';
+                  }
+                  // Disable input
+                  if (input) input.disabled = true;
+                  if (form) {
+                    var submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) submitBtn.disabled = true;
+                  }
+                }
               }
             }
           }
