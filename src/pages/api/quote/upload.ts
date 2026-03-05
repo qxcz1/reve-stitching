@@ -25,6 +25,22 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    // Validate MIME type
+    const allowedTypes = [
+      'application/pdf',
+      'application/postscript',
+      'application/illustrator',
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      return new Response(JSON.stringify({ error: `File type "${file.type}" is not allowed` }), {
+        status: 422,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     // Sanitize filename
     const safeName = file.name
       .replace(/[^a-zA-Z0-9._-]/g, '_')
@@ -39,7 +55,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { data, error } = await supabase.storage
       .from('quote-uploads')
       .upload(path, buffer, {
-        contentType: file.type || 'application/octet-stream',
+        contentType: file.type,
         upsert: false,
       });
 

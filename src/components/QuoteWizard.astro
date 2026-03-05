@@ -1080,67 +1080,58 @@ const stepLabels = ["Product", "Specs", "Customize", "Delivery", "Contact"];
       });
     }
 
-aasync function submitQuote() {
+async function submitQuote() {
   const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
   
-  // Disable button and show loading
   btnNext.disabled = true;
-  btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Submitting…`;
+  btnNext.innerHTML = '<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"></path></svg> Submitting\u2026';
   
   try {
-    // ── Step 1: Upload files first ──
+    // ── Step 1: Upload files ──
     let techPackUrl: string | null = null;
     const referenceImageUrls: string[] = [];
     const tempRef = 'TEMP-' + Date.now();
 
     // Upload tech pack
     if (formData.techPackFiles.length > 0) {
-      btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Uploading tech pack…`;
-      
-      const uploadData = new FormData();
-      uploadData.append('file', formData.techPackFiles[0]);
-      uploadData.append('folder', 'techpack');
-      uploadData.append('ref', tempRef);
-
-      const uploadRes = await fetch('/api/quote/upload', {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      if (uploadRes.ok) {
-        const uploadResult = await uploadRes.json();
-        if (uploadResult.success) {
-          techPackUrl = uploadResult.path;
+      btnNext.textContent = 'Uploading tech pack\u2026';
+      const fd = new FormData();
+      fd.append('file', formData.techPackFiles[0]);
+      fd.append('folder', 'techpack');
+      fd.append('ref', tempRef);
+      try {
+        const upRes = await fetch('/api/quote/upload', { method: 'POST', body: fd });
+        if (upRes.ok) {
+          const upData = await upRes.json();
+          if (upData.success) techPackUrl = upData.path;
         }
+      } catch (e) {
+        console.warn('Tech pack upload failed:', e);
       }
     }
 
     // Upload reference images
     if (formData.referenceImages.length > 0) {
-      btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Uploading images…`;
-      
-      for (const imgFile of formData.referenceImages) {
-        const uploadData = new FormData();
-        uploadData.append('file', imgFile);
-        uploadData.append('folder', 'images');
-        uploadData.append('ref', tempRef);
-
-        const uploadRes = await fetch('/api/quote/upload', {
-          method: 'POST',
-          body: uploadData,
-        });
-
-        if (uploadRes.ok) {
-          const uploadResult = await uploadRes.json();
-          if (uploadResult.success) {
-            referenceImageUrls.push(uploadResult.path);
+      for (let i = 0; i < formData.referenceImages.length; i++) {
+        btnNext.textContent = 'Uploading image ' + (i + 1) + ' of ' + formData.referenceImages.length + '\u2026';
+        const fd = new FormData();
+        fd.append('file', formData.referenceImages[i]);
+        fd.append('folder', 'images');
+        fd.append('ref', tempRef);
+        try {
+          const upRes = await fetch('/api/quote/upload', { method: 'POST', body: fd });
+          if (upRes.ok) {
+            const upData = await upRes.json();
+            if (upData.success) referenceImageUrls.push(upData.path);
           }
+        } catch (e) {
+          console.warn('Image upload failed:', e);
         }
       }
     }
 
     // ── Step 2: Submit quote with file URLs ──
-    btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Processing…`;
+    btnNext.textContent = 'Processing\u2026';
 
     const payload = {
       selectedProduct: formData.selectedProduct,
@@ -1184,27 +1175,19 @@ aasync function submitQuote() {
   } catch (err) {
     alert('Something went wrong. Please try again.\n' + (err as Error).message);
     btnNext.disabled = false;
-    btnNext.innerHTML = `Submit Quote <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>`;
+    btnNext.innerHTML = 'Submit Quote <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>';
   }
 }
 
     // ───────────────── BUTTON HANDLERS ─────────────────
-    btnNext.addEventListener("click", () => {
+        btnNext.addEventListener("click", () => {
       if (currentStep < totalSteps) {
         if (validateStep(currentStep)) {
           goTo(currentStep + 1);
         }
       } else {
-        // final step → submit
         if (validateStep(currentStep)) {
-          // show loading state
-          btnNext.disabled = true;
-          btnNext.innerHTML = `<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="opacity-75"/></svg> Submitting…`;
-          // simulate network delay
-          setTimeout(() => {
-            submitQuote();
-            btnNext.disabled = false;
-          }, 1200);
+          submitQuote();
         }
       }
     });

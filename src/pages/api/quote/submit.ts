@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request }) => {
         phone,
         notes,
         tech_pack_url: body.techPackUrl || null,
-        reference_images: body.referenceImageUrls || [],
+    reference_images: body.referenceImageUrls || [],
         ai_summary,
         estimated_price_range,
         suggested_moq,
