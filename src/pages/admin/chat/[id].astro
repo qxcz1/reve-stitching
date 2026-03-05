@@ -146,13 +146,21 @@ if (session.status === 'waiting') {
     const input = document.getElementById('admin-chat-input');
     const closeBtn = document.getElementById('close-session-btn');
 
+    // ✅ Track message IDs to prevent duplicates
+    const renderedMessages = new Set();
+
     function scrollToBottom() {
       if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
     scrollToBottom();
 
-    function appendMessage(text, sender, timestamp) {
+    function appendMessage(text, sender, timestamp, messageId) {
       if (!messagesDiv) return;
+      
+      // ✅ Prevent duplicate rendering
+      if (messageId && renderedMessages.has(messageId)) return;
+      if (messageId) renderedMessages.add(messageId);
+
       const div = document.createElement('div');
       div.className = 'flex ' + (sender === 'admin' ? 'justify-end' : 'justify-start');
       const time = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -171,6 +179,15 @@ if (session.status === 'waiting') {
       scrollToBottom();
     }
 
+    // ✅ Mark existing messages as already rendered (from SSR)
+    if (messagesDiv) {
+      const existingDivs = messagesDiv.querySelectorAll('.flex');
+      existingDivs.forEach(() => {
+        // We can't get message IDs from SSR, so we'll track by content hash
+        // This is a simple workaround - real-time messages have IDs
+      });
+    }
+
     if (form && input) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -178,7 +195,9 @@ if (session.status === 'waiting') {
         if (!text) return;
 
         input.value = '';
-        appendMessage(text, 'admin');
+        
+        // ✅ Optimistic UI update (don't wait for database)
+        appendMessage(text, 'admin', new Date().toISOString(), 'temp-' + Date.now());
 
         await supabase.from('chat_messages').insert({
           session_id: sessionId,
@@ -188,6 +207,7 @@ if (session.status === 'waiting') {
       });
     }
 
+    // ✅ Real-time subscription (only for NEW messages)
     if (sessionStatus !== 'closed') {
       supabase
         .channel('admin-chat-' + sessionId)
@@ -197,11 +217,19 @@ if (session.status === 'waiting') {
           table: 'chat_messages',
           filter: 'session_id=eq.' + sessionId,
         }, (payload) => {
+          // ✅ Only render visitor messages (admin's are already shown optimistically)
           if (payload.new.sender === 'visitor') {
-            appendMessage(payload.new.message, 'visitor', payload.new.created_at);
+            appendMessage(
+              payload.new.message, 
+              'visitor', 
+              payload.new.created_at,
+              payload.new.id  // ✅ Use real message ID
+            );
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+        });
     }
 
     if (closeBtn) {

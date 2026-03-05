@@ -37,7 +37,7 @@
 >
   <div class="bg-white rounded-2xl shadow-2xl shadow-black/15 border border-zinc-200 overflow-hidden flex flex-col" style="height: min(600px, calc(100vh - 140px));">
     
-    <!-- ━━━ Chat Header ━━━ -->
+<!-- ━━━ Chat Header ━━━ -->
     <div class="bg-primary px-5 py-4 flex items-center gap-3 shrink-0">
       <div class="relative">
         <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -52,6 +52,21 @@
         <h3 class="text-white font-semibold text-sm">Reve Stitching</h3>
         <p class="text-green-200 text-xs">Online • Typically replies instantly</p>
       </div>
+      <!-- NEW: Reset Chat Button -->
+      <button
+        id="chat-reset-btn"
+        class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+        aria-label="Start new chat"
+        title="Start new chat"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
+      </button>
+      <!-- Minimize Button -->
       <button
         id="chat-minimize"
         class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition-colors"
@@ -713,7 +728,15 @@
             stopPolling();
             addMessage("This chat session has ended. Thank you for chatting with us! 👋", 'system');
             setMode('bot');
-            ss(SK.sessionId, '');
+            
+            // Clear all chat data
+            sessionStorage.removeItem(SK.sessionId);
+            sessionStorage.removeItem(SK.messages);
+            sessionStorage.removeItem(SK.hasOpened);
+            sessionStorage.removeItem(SK.wasOpen);
+            sessionStorage.removeItem(SK.mode);
+            
+            // Show fresh quick replies
             showQuickReplies(['Get a quote', 'Product range', 'Contact team']);
           }
         } catch (e) {
@@ -828,9 +851,28 @@
       }
     }
 
-    // ━━━ Event Listeners ━━━
+        // ━━━ Event Listeners ━━━
     toggle?.addEventListener('click', () => { isOpen ? closeChat() : openChat(); });
     minimize?.addEventListener('click', closeChat);
+
+    // NEW: Reset chat button listener
+    const resetBtn = document.getElementById('chat-reset-btn');
+    resetBtn?.addEventListener('click', () => {
+      if (!confirm('Start a new chat? This will clear your current conversation.')) return;
+      
+      // Stop polling if in live mode
+      stopPolling();
+      
+      // Clear everything from sessionStorage
+      sessionStorage.removeItem(SK.messages);
+      sessionStorage.removeItem(SK.hasOpened);
+      sessionStorage.removeItem(SK.wasOpen);
+      sessionStorage.removeItem(SK.mode);
+      sessionStorage.removeItem(SK.sessionId);
+      
+      // Reload page to start fresh
+      window.location.reload();
+    });
 
     form?.addEventListener('submit', (e) => {
       e.preventDefault();
