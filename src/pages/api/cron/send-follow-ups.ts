@@ -19,31 +19,34 @@ export const GET: APIRoute = async ({ request }) => {
   const startTime = Date.now();
 
   // ── 1. Authenticate ──
+  // Support both header auth (Vercel cron) and query param (manual testing)
   const authHeader = request.headers.get('authorization');
+  const url = new URL(request.url);
+  const querySecret = url.searchParams.get('secret');
   const cronSecret = process.env.CRON_SECRET;
-  
-  // Debug logging
-  console.log('[Cron] Auth header received:', authHeader ? 'Bearer ***' : 'null');
-  console.log('[Cron] Expected secret exists:', !!cronSecret);
-  console.log('[Cron] Secret length:', cronSecret?.length || 0);
-  
+
   if (!cronSecret) {
-    console.error('[Cron] ❌ CRON_SECRET environment variable not set');
+    console.error('[Cron] ❌ CRON_SECRET not set');
     return new Response(
       JSON.stringify({ error: 'Server misconfiguration' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-  
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    console.warn('[Cron] ⚠️ Unauthorized cron attempt');
-    console.warn('[Cron] Header format correct:', authHeader?.startsWith('Bearer '));
+
+  const isAuthorized =
+    authHeader === `Bearer ${cronSecret}` ||
+    querySecret === cronSecret;
+
+  if (!isAuthorized) {
+    console.warn('[Cron] ⚠️ Unauthorized attempt');
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
+  console.log('[Cron] ✅ Authenticated via', authHeader ? 'header' : 'query param');
+  
   // ── 2. Initialize Supabase with service role (bypasses RLS) ──
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
