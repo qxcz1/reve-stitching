@@ -573,7 +573,11 @@ const stepLabels = ["Product", "Specs", "Customize", "Delivery", "Contact"];
 
 <!-- ─── Client Script ─── -->
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initQuoteWizard() {
+    // Prevent double initialization
+    const wizard = document.getElementById('quote-wizard-section');
+    if (!wizard || wizard.dataset.initialized === 'true') return;
+    wizard.dataset.initialized = 'true';
     // ───────────────── STATE ─────────────────
     let currentStep = 1;
     const totalSteps = 5;
@@ -1250,5 +1254,8 @@ function fileToBase64(file: File): Promise<string> {
 
     // ───────────────── INIT ─────────────────
     updateUI();
-  });
+  }
+
+  // Works on initial load AND Astro view transitions
+  document.addEventListener('astro:page-load', initQuoteWizard);
 </script>

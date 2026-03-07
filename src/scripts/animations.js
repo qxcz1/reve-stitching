@@ -19,10 +19,10 @@ let lenisInstance = null;
 let tickerCallback = null;
 
 /* ━━━ Main Initialization ━━━ */
-export function initAnimations() {
+export async function initAnimations() {
   try {
     cleanup();
-    initLenis();
+    await initLenis();
 
     // Mark that GSAP is ready
     document.documentElement.classList.add('gsap-ready');
@@ -74,49 +74,49 @@ function cleanup() {
 }
 
 /* ━━━ Lenis Smooth Scroll ━━━ */
-function initLenis() {
-  // Dynamic import to prevent Lenis from breaking everything if it fails
+async function initLenis() {
   try {
-    const Lenis = window.Lenis || null;
+    let LenisClass = null;
 
-    // If Lenis isn't available as a global, try the module approach
-    if (!Lenis) {
-      import('lenis').then((module) => {
-        const LenisClass = module.default || module.Lenis;
-        setupLenis(LenisClass);
-      }).catch(() => {
-        console.warn('Lenis not available, using native scroll');
-      });
+    // Try static global first, then dynamic import
+    if (window.Lenis) {
+      LenisClass = window.Lenis;
     } else {
-      setupLenis(Lenis);
+      try {
+        const module = await import('lenis');
+        LenisClass = module.default || module.Lenis;
+      } catch {
+        console.warn('Lenis not available, using native scroll');
+        return;
+      }
     }
+
+    if (!LenisClass) return;
+
+    lenisInstance = new LenisClass({
+      duration: 1.0,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
+      infinite: false,
+      prevent: (node) => {
+        if (!node || !node.closest) return false;
+        return node.closest('#chat-window') !== null ||
+               node.closest('#mobile-menu') !== null;
+      },
+    });
+
+    lenisInstance.on('scroll', ScrollTrigger.update);
+
+    tickerCallback = (time) => {
+      if (lenisInstance) lenisInstance.raf(time * 1000);
+    };
+
+    gsap.ticker.add(tickerCallback);
   } catch (e) {
     console.warn('Lenis init skipped:', e);
   }
-}
-
-function setupLenis(LenisClass) {
-  if (!LenisClass) return;
-
-  lenisInstance = new LenisClass({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    touchMultiplier: 2,
-    infinite: false,
-    prevent: (node) => {
-      // Don't hijack scroll inside chat widget
-      return node.closest('#chat-window') !== null;
-    },
-  });
-
-  lenisInstance.on('scroll', ScrollTrigger.update);
-
-  tickerCallback = (time) => {
-    if (lenisInstance) lenisInstance.raf(time * 1000);
-  };
-
-  gsap.ticker.add(tickerCallback);
-  gsap.ticker.lagSmoothing(0);
 }
 
 /* ━━━ Fade-In Animations ━━━ */

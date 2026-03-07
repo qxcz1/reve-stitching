@@ -131,6 +131,12 @@
       height: calc(100vh - 80px) !important;
       max-height: none !important;
     }
+
+    /* Hide floating toggle when chat is open on mobile */
+    #chat-window.pointer-events-auto ~ #chat-toggle,
+    #chat-window:not(.pointer-events-none) + #chat-toggle {
+      display: none !important;
+    }
   }
   
   .typing-dot {
@@ -173,6 +179,15 @@
     const humanBtn = document.getElementById('request-human-btn');
 
     let isOpen = false;
+     // Clean up old intervals from previous page loads (View Transitions)
+    if ((window as any).__chatPollInterval) {
+      clearInterval((window as any).__chatPollInterval);
+      (window as any).__chatPollInterval = null;
+    }
+    if ((window as any).__chatHeartbeatInterval) {
+      clearInterval((window as any).__chatHeartbeatInterval);
+      (window as any).__chatHeartbeatInterval = null;
+    }
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     let lastPollTimestamp = new Date().toISOString();
     const seenMessageIds = new Set();
@@ -704,11 +719,11 @@
       }
     }
 
-    // ━━━ Live Chat: Poll for Admin Messages ━━━
-       function startPolling(): void {
+        // ━━━ Live Chat: Poll for Admin Messages ━━━
+    function startPolling(): void {
       if (pollInterval) return;
 
-      pollInterval = setInterval(async () => {
+      const intervalId = setInterval(async () => {
         const sessionId = getSessionId();
         const visitorToken = getVisitorToken();
         if (!sessionId) return;
@@ -766,6 +781,8 @@
           console.warn('Poll error:', e);
         }
       }, 3000);
+      pollInterval = intervalId;
+      (window as any).__chatPollInterval = intervalId;
     }
 
     // ━━━ Heartbeat: Keep session alive ━━━
@@ -773,7 +790,7 @@
 
     function startHeartbeat(): void {
       if (heartbeatInterval) return;
-      heartbeatInterval = setInterval(async () => {
+      const hbId = setInterval(async () => {
         const sessionId = getSessionId();
         const visitorToken = getVisitorToken();
         if (!sessionId || getMode() !== 'live') {
@@ -787,15 +804,20 @@
             body: JSON.stringify({ sessionId, visitorToken }),
           });
         } catch {}
-      }, 15000); // Every 15 seconds
+      }, 15000);
+      heartbeatInterval = hbId;
+      (window as any).__chatHeartbeatInterval = hbId;
     }
+
 
     function stopHeartbeat(): void {
       if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+      if ((window as any).__chatHeartbeatInterval) { clearInterval((window as any).__chatHeartbeatInterval); (window as any).__chatHeartbeatInterval = null; }
     }
 
     function stopPolling(): void {
       if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+      if ((window as any).__chatPollInterval) { clearInterval((window as any).__chatPollInterval); (window as any).__chatPollInterval = null; }
     }
 
     // ━━━ Handle User Message ━━━
@@ -920,6 +942,11 @@
       iconClose?.classList.add('rotate-0', 'scale-100');
       notification?.classList.add('hidden');
 
+      // Hide toggle button on mobile when chat is open
+      if (window.innerWidth <= 480 && toggle) {
+        toggle.style.display = 'none';
+      }
+
       if (!ss(SK.hasOpened)) {
         ss(SK.hasOpened, 'true');
         setTimeout(() => {
@@ -953,6 +980,11 @@
       iconOpen?.classList.remove('opacity-0', 'rotate-90', 'scale-0');
       iconClose?.classList.add('opacity-0');
       iconClose?.classList.remove('rotate-0', 'scale-100');
+
+      // Show toggle button again
+      if (toggle) {
+        toggle.style.display = '';
+      }
     }
 
     // ━━━ Init ━━━
