@@ -6,15 +6,12 @@ import ManualTriggerButton from '../../components/admin/ManualTriggerButton.astr
 
 export const prerender = false;
 
-// Create Supabase client (admin is already authenticated by AdminLayout)
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase credentials not configured');
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use service role key — admin is already authenticated by AdminLayout
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // Fetch analytics
 let analytics;
