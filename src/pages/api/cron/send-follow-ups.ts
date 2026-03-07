@@ -20,8 +20,13 @@ export const GET: APIRoute = async ({ request }) => {
 
   // ── 1. Authenticate ──
   const authHeader = request.headers.get('authorization');
-  const cronSecret = import.meta.env.CRON_SECRET;
-
+  const cronSecret = process.env.CRON_SECRET;
+  
+  // Debug logging
+  console.log('[Cron] Auth header received:', authHeader ? 'Bearer ***' : 'null');
+  console.log('[Cron] Expected secret exists:', !!cronSecret);
+  console.log('[Cron] Secret length:', cronSecret?.length || 0);
+  
   if (!cronSecret) {
     console.error('[Cron] ❌ CRON_SECRET environment variable not set');
     return new Response(
@@ -29,9 +34,10 @@ export const GET: APIRoute = async ({ request }) => {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-
+  
   if (authHeader !== `Bearer ${cronSecret}`) {
     console.warn('[Cron] ⚠️ Unauthorized cron attempt');
+    console.warn('[Cron] Header format correct:', authHeader?.startsWith('Bearer '));
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -39,8 +45,8 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   // ── 2. Initialize Supabase with service role (bypasses RLS) ──
-  const supabaseUrl = import.meta.env.SUPABASE_URL;
-  const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error('[Cron] ❌ Supabase credentials not configured');
@@ -82,7 +88,7 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[Cron] ❌ Unhandled error:', message);
 
     // Send critical error to Discord
-    const discordUrl = import.meta.env.DISCORD_WEBHOOK_URL;
+    const discordUrl = process.env.DISCORD_WEBHOOK_URL;
     if (discordUrl) {
       fetch(discordUrl, {
         method: 'POST',

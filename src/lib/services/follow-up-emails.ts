@@ -47,7 +47,7 @@ interface FollowUpResult {
 
 const ADMIN_EMAIL = 'admin@revestitching.com';
 const FROM_ADDRESS = 'Reve Stitching <notifications@revestitching.com>';
-const DISCORD_WEBHOOK_URL = import.meta.env.DISCORD_WEBHOOK_URL || '';
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || '';
 
 // Timing thresholds (in hours)
 const THRESHOLD_24H = 24;
@@ -303,7 +303,7 @@ export async function checkAndSendFollowUps(
     details: [],
   };
 
-  const resendApiKey = import.meta.env.RESEND_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
     console.error('[FollowUp] ❌ RESEND_API_KEY not configured');
     return result;
