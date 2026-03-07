@@ -1,5 +1,5 @@
 ---
-// src/pages/admin/quote/[id].astro
+// src/pages/admin/quotes/[id].astro
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getSupabase } from '../../../lib/supabase';
@@ -83,9 +83,9 @@ const destLabel    = DESTINATION_NAMES[q.destination] || q.destination;
 const customList   = (q.customizations || []).map((c: string) => CUSTOMIZATION_NAMES[c] || c);
 
 // Build mailto link
-const mailSubject = encodeURIComponent(`RE: Quote ${q.reference_number} — Reves Titching`);
+const mailSubject = encodeURIComponent(`RE: Quote ${q.reference_number} — Reve Stitching`);
 const mailBody = encodeURIComponent(
-  `Dear ${q.contact_person},\n\nThank you for your quote request (${q.reference_number}) for ${q.quantity} pcs of ${productLabel}.\n\nWe have reviewed your requirements and are pleased to offer the following:\n\n[Your quote details here]\n\nPlease let us know if you have any questions.\n\nBest regards,\nReves Titching Team`
+  `Dear ${q.contact_person},\n\nThank you for your quote request (${q.reference_number}) for ${q.quantity} pcs of ${productLabel}.\n\nWe have reviewed your requirements and are pleased to offer the following:\n\n[Your quote details here]\n\nPlease let us know if you have any questions.\n\nBest regards,\nReve Stitching Team`
 );
 const mailtoHref = `mailto:${q.email}?subject=${mailSubject}&body=${mailBody}`;
 
@@ -94,7 +94,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
 
 <AdminLayout title={`Quote ${q.reference_number}`}>
 
-  <!-- ─── Flash Message ─── -->
+  <!-- Flash Message -->
   {flash && (
     <div class:list={[
       "mb-6 rounded-lg p-3 text-sm font-medium",
@@ -104,7 +104,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
     </div>
   )}
 
-  <!-- ─── Back + Header ─── -->
+  <!-- Back + Header -->
   <div class="mb-6">
     <a href="/admin/quotes" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -120,7 +120,10 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           {sm.label}
         </span>
         {q.is_rush && (
-          <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">⚡ Rush</span>
+          <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+            <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Rush
+          </span>
         )}
       </div>
       <p class="mt-1 text-sm text-gray-500">
@@ -131,7 +134,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
     <div class="flex gap-2">
       <a
         href={mailtoHref}
-        class="inline-flex items-center gap-2 rounded-lg bg-green-800 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-green-700"
+        class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-primary-light"
       >
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         Email Client
@@ -146,25 +149,27 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
     </div>
   </div>
 
-  <!-- ─── Main Grid ─── -->
+  <!-- Main Grid -->
   <div class="grid gap-6 lg:grid-cols-3">
 
-    <!-- ─── LEFT COL: Details (2/3) ─── -->
+    <!-- LEFT COL: Details (2/3) -->
     <div class="space-y-6 lg:col-span-2">
 
       <!-- AI Summary -->
       {q.ai_summary && (
-        <div class="rounded-xl border border-green-200 bg-green-50 p-6">
+        <div class="rounded-xl border border-primary/20 bg-primary/5 p-6">
           <div class="mb-3 flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-green-200 text-sm">🤖</span>
-            <h2 class="text-sm font-bold text-green-900">AI Analysis</h2>
+            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20">
+              <svg class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </span>
+            <h2 class="text-sm font-bold text-gray-900">AI Analysis</h2>
           </div>
-          <p class="text-sm leading-relaxed text-green-900">{q.ai_summary}</p>
+          <p class="text-sm leading-relaxed text-gray-700">{q.ai_summary}</p>
           <div class="mt-4 flex flex-wrap gap-4 text-sm">
             {q.estimated_price_range && (
               <div class="rounded-lg bg-white px-3 py-2 shadow-sm">
                 <span class="text-xs text-gray-500">Est. Price</span>
-                <p class="font-bold text-green-800">{q.estimated_price_range}</p>
+                <p class="font-bold text-primary">{q.estimated_price_range}</p>
               </div>
             )}
             {q.suggested_moq && (
@@ -175,8 +180,9 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
             )}
           </div>
           {q.ai_flags && (
-            <div class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              ⚠️ {q.ai_flags}
+            <div class="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>{q.ai_flags}</span>
             </div>
           )}
         </div>
@@ -194,7 +200,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
               <div class="flex items-center gap-2">
                 <div class="h-2 w-32 overflow-hidden rounded-full bg-gray-200">
                   <div 
-                    class="h-full rounded-full bg-gradient-to-r from-green-800 to-green-600 transition-all"
+                    class="h-full rounded-full bg-gradient-to-r from-primary to-primary-light transition-all"
                     style={`width: ${(q.ai_confidence_score * 100).toFixed(0)}%`}
                   ></div>
                 </div>
@@ -240,7 +246,10 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
                 <span class="font-medium text-gray-600">Decorations:</span>
                 <div class="mt-1 space-y-1 text-gray-900">
                   {q.ai_extracted_data.decorations.map((dec: any) => (
-                    <div>• <strong>{dec.type}</strong> — {dec.location} — {dec.details}</div>
+                    <div class="flex items-start gap-2">
+                      <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-400"></span>
+                      <span><strong>{dec.type}</strong> — {dec.location} — {dec.details}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -257,10 +266,16 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           <!-- Missing Information -->
           {q.ai_missing_fields && q.ai_missing_fields.length > 0 && (
             <div class="mt-4">
-              <h4 class="mb-2 text-sm font-semibold text-amber-700">⚠️ Missing Information</h4>
+              <h4 class="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-700">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                Missing Information
+              </h4>
               <ul class="space-y-1">
                 {q.ai_missing_fields.map((field: string) => (
-                  <li class="text-sm text-amber-600">• {field}</li>
+                  <li class="flex items-start gap-2 text-sm text-amber-600">
+                    <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
+                    <span>{field}</span>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -269,14 +284,17 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           <!-- Action Items -->
           {q.action_items && q.action_items.items && q.action_items.items.length > 0 && (
             <div class="mt-4">
-              <h4 class="mb-3 text-sm font-semibold text-gray-900">✅ Action Items for Sales Team</h4>
+              <h4 class="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Action Items for Sales Team
+              </h4>
               <div class="space-y-2">
                 {q.action_items.items.map((item: any) => (
-                  <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:border-green-700">
+                  <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 transition hover:border-primary/50">
                     <input 
                       type="checkbox" 
                       checked={item.completed}
-                      class="mt-0.5 h-4 w-4 rounded border-gray-300 text-green-800 focus:ring-green-600"
+                      class="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
                     <div class="flex-1">
                       <div class="flex items-center gap-2">
@@ -309,7 +327,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
         <dl class="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
           <div><dt class="text-gray-500">Company</dt><dd class="mt-0.5 font-semibold text-gray-900">{q.company_name}</dd></div>
           <div><dt class="text-gray-500">Contact</dt><dd class="mt-0.5 font-semibold text-gray-900">{q.contact_person}</dd></div>
-          <div><dt class="text-gray-500">Email</dt><dd class="mt-0.5"><a href={`mailto:${q.email}`} class="font-medium text-green-800 hover:underline">{q.email}</a></dd></div>
+          <div><dt class="text-gray-500">Email</dt><dd class="mt-0.5"><a href={`mailto:${q.email}`} class="font-medium text-primary hover:underline">{q.email}</a></dd></div>
           <div><dt class="text-gray-500">Phone</dt><dd class="mt-0.5 font-medium text-gray-900">{q.phone || '—'}</dd></div>
         </dl>
       </div>
@@ -324,7 +342,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           <div><dt class="text-gray-500">Product</dt><dd class="mt-0.5 font-semibold text-gray-900">{productLabel}</dd></div>
           <div><dt class="text-gray-500">Fabric</dt><dd class="mt-0.5 font-medium text-gray-900">{fabricLabel}</dd></div>
           <div><dt class="text-gray-500">GSM</dt><dd class="mt-0.5 font-medium text-gray-900">{q.gsm} g/m²</dd></div>
-          <div><dt class="text-gray-500">Quantity</dt><dd class="mt-0.5 text-lg font-bold text-green-800">{q.quantity.toLocaleString()} pcs</dd></div>
+          <div><dt class="text-gray-500">Quantity</dt><dd class="mt-0.5 text-lg font-bold text-primary">{q.quantity.toLocaleString()} pcs</dd></div>
           <div><dt class="text-gray-500">Sizes</dt><dd class="mt-0.5 font-medium text-gray-900">{(q.sizes || []).join(', ')}</dd></div>
           <div><dt class="text-gray-500">Colors</dt><dd class="mt-0.5 font-medium text-gray-900">{q.color_count}</dd></div>
         </dl>
@@ -339,8 +357,9 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           </h2>
           <div class="flex flex-wrap gap-2">
             {customList.map((c: string) => (
-              <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
-                ✓ {c}
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
+                <svg class="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {c}
               </span>
             ))}
           </div>
@@ -356,15 +375,38 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
         <dl class="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
           <div><dt class="text-gray-500">Target Date</dt><dd class="mt-0.5 font-semibold text-gray-900">{formatDate(q.target_date)}</dd></div>
           <div><dt class="text-gray-500">Destination</dt><dd class="mt-0.5 font-medium text-gray-900">{destLabel}</dd></div>
-          <div><dt class="text-gray-500">Sample Required</dt><dd class="mt-0.5 font-medium">{q.has_sample ? '✅ Yes' : 'No'}</dd></div>
-          <div><dt class="text-gray-500">Rush Order</dt><dd class:list={["mt-0.5 font-medium", q.is_rush ? "text-amber-700" : "text-gray-900"]}>{q.is_rush ? '⚡ Yes' : 'No'}</dd></div>
+          <div>
+            <dt class="text-gray-500">Sample Required</dt>
+            <dd class="mt-0.5 flex items-center gap-1.5 font-medium text-gray-900">
+              {q.has_sample ? (
+                <>
+                  <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  Yes
+                </>
+              ) : 'No'}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">Rush Order</dt>
+            <dd class:list={["mt-0.5 flex items-center gap-1.5 font-medium", q.is_rush ? "text-amber-700" : "text-gray-900"]}>
+              {q.is_rush ? (
+                <>
+                  <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  Yes
+                </>
+              ) : 'No'}
+            </dd>
+          </div>
         </dl>
       </div>
 
       <!-- Customer Notes -->
       {q.notes && (
         <div class="rounded-xl bg-white p-6 shadow ring-1 ring-gray-200">
-          <h2 class="mb-2 text-sm font-bold text-gray-900">Customer Notes</h2>
+          <h2 class="mb-2 flex items-center gap-2 text-sm font-bold text-gray-900">
+            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+            Customer Notes
+          </h2>
           <p class="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{q.notes}</p>
         </div>
       )}
@@ -391,7 +433,10 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
                   <p class="font-medium text-gray-900">Tech Pack</p>
                   <p class="text-xs text-gray-500">{fileName(q.tech_pack_url!)}</p>
                 </div>
-                <span class="ml-auto text-xs text-green-800">Download ↓</span>
+                <span class="ml-auto flex items-center gap-1 text-xs text-primary">
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Download
+                </span>
               </a>
             )}
 
@@ -409,7 +454,10 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
                   <p class="font-medium text-gray-900">Reference Image</p>
                   <p class="text-xs text-gray-500">{fileName(img.path)}</p>
                 </div>
-                <span class="ml-auto text-xs text-green-800">Download ↓</span>
+                <span class="ml-auto flex items-center gap-1 text-xs text-primary">
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Download
+                </span>
               </a>
             ))}
           </div>
@@ -417,7 +465,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
       )}
     </div>
 
-    <!-- ─── RIGHT COL: Actions (1/3) ─── -->
+    <!-- RIGHT COL: Actions (1/3) -->
     <div class="space-y-6">
 
       <!-- Status Update -->
@@ -427,7 +475,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           <input type="hidden" name="_action" value="update-status" />
           <select
             name="status"
-            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/30"
+            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             {allStatuses.map((s) => (
               <option value={s} selected={q.status === s}>
@@ -437,7 +485,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
           </select>
           <button
             type="submit"
-            class="w-full rounded-lg bg-green-800 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-green-700"
+            class="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-primary-light"
           >
             Update Status
           </button>
@@ -457,7 +505,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
               name="assigned_to"
               value={q.assigned_to || ''}
               placeholder="e.g. Ali, Sarah…"
-              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/30"
+              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div>
@@ -467,7 +515,7 @@ const allStatuses: QuoteStatus[] = ['new', 'reviewed', 'quoted', 'converted', 'r
               name="admin_notes"
               rows="5"
               placeholder="Internal notes, pricing calculations, follow-up reminders…"
-              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/30"
+              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
             >{q.admin_notes || ''}</textarea>
           </div>
           <button
