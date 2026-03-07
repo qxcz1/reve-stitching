@@ -17,16 +17,19 @@ const currentPath = Astro.url.pathname;
 const token = Astro.cookies.get(COOKIE_CONFIG.name)?.value;
 
 if (!token) {
+  console.log('[AdminLayout] No token found, redirecting to login');
   return Astro.redirect('/admin/login');
 }
 
 const admin = verifyAdminToken(token);
 
 if (!admin) {
-  // Token invalid or expired — clear it and redirect
+  console.warn('[AdminLayout] Invalid/expired token, clearing cookie');
   Astro.cookies.delete(COOKIE_CONFIG.name, { path: '/' });
   return Astro.redirect('/admin/login');
 }
+
+console.log(`[AdminLayout] ✅ Admin authenticated: ${admin.sub}`);
 // ══════════════════════════════════════════════════
 ---
 
