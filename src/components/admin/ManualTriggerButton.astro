@@ -1,5 +1,8 @@
 ---
 // src/components/admin/ManualTriggerButton.astro
+
+// Get the CRON_SECRET server-side and pass to client
+const cronSecret = process.env.CRON_SECRET || '';
 ---
 
 <div class="manual-trigger-wrapper">
@@ -7,6 +10,7 @@
     id="manual-trigger-btn"
     class="manual-trigger-btn"
     type="button"
+    data-secret={cronSecret}
   >
     <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -129,6 +133,16 @@
     const btnText = btn.querySelector('.btn-text') as HTMLElement;
     const btnLoading = btn.querySelector('.btn-loading') as HTMLElement;
 
+    // Get secret from data attribute
+    const secret = btn.dataset.secret;
+
+    if (!secret) {
+      resultDiv.className = 'trigger-result error';
+      resultDiv.innerHTML = '<strong>❌ Error:</strong> Secret not configured';
+      resultDiv.style.display = 'block';
+      return;
+    }
+
     // Show loading state
     btn.disabled = true;
     btnText.style.display = 'none';
@@ -136,10 +150,8 @@
     resultDiv.style.display = 'none';
 
     try {
-      const response = await fetch('/api/admin/trigger-follow-ups', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' }
+      const response = await fetch(`/api/admin/trigger-follow-ups?secret=${secret}`, {
+        method: 'GET'
       });
 
       const data = await response.json();

@@ -8,58 +8,65 @@ export const prerender = false;
 
 /**
  * Manual trigger for follow-up emails.
- * Used from admin dashboard for testing or immediate processing.
- *
- * POST /api/admin/trigger-follow-ups
- * Requires admin session (validated via Supabase auth).
+ * Uses query param secret (same as cron) for simplicity.
  */
-export const POST: APIRoute = async ({ request, cookies }) => {
-  // ── Validate admin session ──
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const GET: APIRoute = async ({ request }) => {
+  const startTime = Date.now();
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  // ── 1. Authenticate via query param (same as cron) ──
+  const url = new URL(request.url);
+  const querySecret = url.searchParams.get('secret');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
     return new Response(
-      JSON.stringify({ error: 'Not configured' }),
+      JSON.stringify({ success: false, error: 'Server misconfiguration' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // Check auth via access token cookie
-  const accessToken = cookies.get('sb-access-token')?.value;
-  if (!accessToken) {
+  if (querySecret !== cronSecret) {
     return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
+      JSON.stringify({ success: false, error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // Verify the token is valid
-  const anonClient = createClient(supabaseUrl, supabaseAnonKey || '');
-  const { data: { user }, error: authError } = await anonClient.auth.getUser(accessToken);
+  // ── 2. Initialize Supabase ──
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (authError || !user) {
+  if (!supabaseUrl || !supabaseServiceKey) {
     return new Response(
-      JSON.stringify({ error: 'Invalid session' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, error: 'Database not configured' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // ── Run with service role client ──
-  const serviceClient = createClient(supabaseUrl, supabaseServiceKey, {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // ── 3. Run follow-up logic ──
   try {
-    const result = await checkAndSendFollowUps(serviceClient);
+    const result = await checkAndSendFollowUps(supabase);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
 
-    return new Response(JSON.stringify({ success: true, ...result }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        duration: `${elapsed}s`,
+        ...result,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Manual Trigger] Error:', message);
+
     return new Response(
       JSON.stringify({ success: false, error: message }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
