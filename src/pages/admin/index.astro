@@ -1,8 +1,8 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { createClient } from '@supabase/supabase-js';
+import { getFullDashboardStats, EMPTY_STATS } from '../../lib/dashboard-stats';
 import ManualTriggerButton from '../../components/admin/ManualTriggerButton.astro';
-import { getDashboardStats, EMPTY_STATS } from '../../lib/dashboard-stats';
 
 export const prerender = false;
 
@@ -12,277 +12,548 @@ const supabase = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-// ── Get stats from SQL function (fast!) + other data in parallel ──
-const [statsResult, chatsResult, contactsResult] = await Promise.all([
-  getDashboardStats(supabase),
-  supabase
-    .from('chat_sessions')
-    .select('id, visitor_name, visitor_email, status, created_at')
-    .order('created_at', { ascending: false })
-    .limit(5),
-  supabase
-    .from('contact_submissions')
-    .select('id, name, email, company, message, status, created_at')
-    .order('created_at', { ascending: false })
-    .limit(10),
+// Fetch all data in parallel
+const [statsResult, contactsResult, sessionsResult] = await Promise.all([
+  getFullDashboardStats(supabase),
+  supabase.from('contact_submissions').select('*').order('created_at', { ascending: false }).limit(50),
+  supabase.from('chat_sessions').select('*').order('created_at', { ascending: false }).limit(50),
 ]);
 
-const stats = statsResult.data || EMPTY_STATS;
-const chats = chatsResult.data || [];
-const contactList = contactsResult.data || [];
+const analytics = statsResult.data || EMPTY_STATS;
+const analyticsError = statsResult.error;
+const contacts = contactsResult.data || [];
+const sessions = sessionsResult.data || [];
 
-// ── Use SQL-powered stats ──
-const totalQuotes = stats.total_quotes;
-const newCount = stats.new;
-const reviewedCount = stats.reviewed;
-const quotedCount = stats.quoted;
-const convertedCount = stats.converted;
-const rejectedCount = stats.rejected;
-const activeQuotes = newCount + reviewedCount + quotedCount;
-const conversionRate = stats.conversion_rate.toFixed(1);
-const thisMonth = stats.last_30_days;
+const newContacts = contacts.filter(c => c.status === 'new').length;
+const waitingChats = sessions.filter(s => s.status === 'waiting').length;
+const activeChats = sessions.filter(s => s.status === 'active').length;
 
-// Pipeline value (static for now - can add to SQL later)
-const pipelineValue = 0;
-const avgResponseHours = '< 1 hr';
+// Month-over-month change
+const quotesChange = analytics.quotes_last_month > 0 
+  ? Math.round(((analytics.quotes_this_month - analytics.quotes_last_month) / analytics.quotes_last_month) * 100)
+  : analytics.quotes_this_month > 0 ? 100 : 0;
 
-const funnelStages = [
-  { label: 'New', count: newCount, value: 0, color: 'bg-blue-500' },
-  { label: 'Reviewed', count: reviewedCount, value: 0, color: 'bg-yellow-500' },
-  { label: 'Quoted', count: quotedCount, value: 0, color: 'bg-green-500' },
-  { label: 'Won', count: convertedCount, value: 0, color: 'bg-emerald-600' },
-  { label: 'Lost', count: rejectedCount, value: 0, color: 'bg-red-500' },
-];
+function formatCurrency(value: number): string {
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+  return `$${value}`;
+}
 
-const maxFunnelCount = Math.max(...funnelStages.map(s => s.count), 1);
-
-// Use SQL monthly trend (last 6 of 12 months)
-const months = stats.monthly_trend.slice(-6).map(m => ({
-  label: new Date(m.month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-  count: m.count
-}));
-const maxMonthCount = Math.max(...months.map(m => m.count), 1);
-
-// Use SQL top products
-const topProducts = stats.top_products.slice(0, 5).map(p => ({
-  name: p.product.charAt(0).toUpperCase() + p.product.slice(1),
-  count: p.count,
-  totalQty: 0,
-  avg: 0
-}));
-const maxProductCount = Math.max(...topProducts.map(p => p.count), 1);
-
-// Geo distribution (will add to SQL later)
-const geoData: { name: string; count: number; percentage: string }[] = [];
-
-const waitingChats = chats.filter(c => c.status === 'waiting').length;
-const activeChats = chats.filter(c => c.status === 'active').length;
-const totalContacts = contactList.length;
-const unreadContacts = contactList.filter(c => c.status === 'new').length;
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString('en-GB', {
-    day: 'numeric', month: 'numeric', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  });
+function formatResponseTime(hours: number): string {
+  if (hours < 1) return '< 1 hr';
+  if (hours < 24) return `${hours} hrs`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
 }
 ---
 
 <AdminLayout title="Dashboard">
 
-  <div class="mb-6 flex items-center justify-between">
-    <h2 class="text-lg font-bold text-zinc-900">Quote Analytics</h2>
-    <a href="/admin/quotes" class="text-sm text-primary hover:underline">View all</a>
+{analyticsError && (
+  <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+    <strong>Analytics Error:</strong> {analyticsError}
   </div>
+)}
 
-  <div class="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
-      <p class="text-2xl font-bold text-zinc-900">{totalQuotes}</p>
-      <p class="text-xs text-zinc-500 mt-1">Total Quotes</p>
-      {thisMonth > 0 && <p class="text-xs text-green-600 mt-1">+{((thisMonth / Math.max(totalQuotes, 1)) * 100).toFixed(0)}%</p>}
+<!-- Performance Badge (dev only) -->
+{statsResult.durationMs && (
+  <div class="mb-4 text-right">
+    <span class="inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700 font-medium">
+      ⚡ SQL Stats: {statsResult.durationMs}ms
+    </span>
+  </div>
+)}
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     QUOTE ANALYTICS STATS (Colorful Gradient Cards)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="mb-8">
+  <h2 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+    <svg class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+    Quote Analytics
+  </h2>
+  
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+    <!-- Total Quotes -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg shadow-blue-500/20">
+      <div class="flex items-center justify-between mb-2">
+        <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <a href="/admin/quotes" class="text-xs opacity-70 hover:opacity-100 transition-opacity">View all</a>
+      </div>
+      <p class="text-2xl font-bold">{analytics.total_quotes}</p>
+      <p class="text-xs opacity-80">Total Quotes</p>
     </div>
-    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
-      <p class="text-2xl font-bold text-zinc-900">{thisMonth}</p>
-      <p class="text-xs text-zinc-500 mt-1">This Month</p>
+
+    <!-- This Month -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg shadow-green-500/20">
+      <div class="flex items-center justify-between mb-2">
+        <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        {quotesChange !== 0 && (
+          <span class={`text-xs px-1.5 py-0.5 rounded ${quotesChange > 0 ? 'bg-white/20' : 'bg-red-500/30'}`}>
+            {quotesChange > 0 ? '+' : ''}{quotesChange}%
+          </span>
+        )}
+      </div>
+      <p class="text-2xl font-bold">{analytics.quotes_this_month}</p>
+      <p class="text-xs opacity-80">This Month</p>
     </div>
-    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
-      <p class="text-2xl font-bold text-zinc-900">{activeQuotes}</p>
-      <p class="text-xs text-zinc-500 mt-1">Active Quotes</p>
+
+    <!-- Active Pipeline -->
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg shadow-purple-500/20">
+      <div class="flex items-center justify-between mb-2">
+        <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      </div>
+      <p class="text-2xl font-bold">{analytics.active_quotes}</p>
+      <p class="text-xs opacity-80">Active Quotes</p>
     </div>
-    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
-      <p class="text-2xl font-bold text-zinc-900">${pipelineValue.toLocaleString()}</p>
-      <p class="text-xs text-zinc-500 mt-1">Pipeline Value</p>
+
+    <!-- Pipeline Value -->
+    <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 text-white shadow-lg shadow-amber-500/20">
+      <div class="flex items-center justify-between mb-2">
+        <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <p class="text-2xl font-bold">{formatCurrency(analytics.pipeline_value)}</p>
+      <p class="text-xs opacity-80">Pipeline Value</p>
     </div>
-    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
-      <p class="text-2xl font-bold text-zinc-900">{avgResponseHours}</p>
-      <p class="text-xs text-zinc-500 mt-1">Avg Response</p>
+
+    <!-- Response Time -->
+    <div class="bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl p-4 text-white shadow-lg shadow-cyan-500/20">
+      <div class="flex items-center justify-between mb-2">
+        <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <p class="text-2xl font-bold">{formatResponseTime(analytics.avg_response_hours)}</p>
+      <p class="text-xs opacity-80">Avg Response</p>
     </div>
-    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
-      <p class="text-2xl font-bold text-zinc-900">{conversionRate}%</p>
-      <p class="text-xs text-zinc-500 mt-1">Conversion</p>
+
+    <!-- Conversion Rate -->
+    <div class="bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl p-4 text-white shadow-lg shadow-rose-500/20">
+      <div class="flex items-center justify-between mb-2">
+        <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <p class="text-2xl font-bold">{analytics.conversion_rate}%</p>
+      <p class="text-xs opacity-80">Conversion</p>
     </div>
   </div>
+</div>
 
-  <div class="mb-8 rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
-    <h2 class="text-sm font-bold text-zinc-900 mb-2">Email Follow-Ups</h2>
-    <p class="text-sm text-zinc-600 mb-2">
-      Manually trigger the automated follow-up email system. This will check all quotes and send:
-    </p>
-    <ul class="text-sm text-zinc-600 list-disc list-inside mb-4 space-y-1">
-      <li>24-hour buyer follow-ups (status = 'new', &gt;24h old)</li>
-      <li>48-hour admin reminders (status = 'new', &gt;48h old)</li>
-      <li>7-day re-engagement emails (status = 'new', &gt;7d old)</li>
-    </ul>
-    <ManualTriggerButton />
-  </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     EMAIL FOLLOW-UPS SECTION
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="mb-8 rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+  <h2 class="text-sm font-bold text-zinc-900 mb-2">Email Follow-Ups</h2>
+  <p class="text-sm text-zinc-600 mb-2">
+    Manually trigger the automated follow-up email system.
+  </p>
+  <ManualTriggerButton />
+</div>
 
-  <div class="mb-8 grid gap-6 lg:grid-cols-2">
-    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
-      <h3 class="text-sm font-bold text-zinc-900 mb-4">Conversion Funnel</h3>
-      <div class="space-y-3">
-        {funnelStages.map((stage) => (
-          <div>
-            <div class="flex items-center justify-between text-sm mb-1">
-              <span class="font-medium text-zinc-700">{stage.label}</span>
-              <div class="flex items-center gap-3">
-                <span class="font-bold text-zinc-900">{stage.count}</span>
-                {stage.value > 0 && <span class="text-xs text-zinc-400">${stage.value.toLocaleString()}</span>}
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CHARTS SECTION
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  
+  <!-- Quote Funnel -->
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <h3 class="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+      <svg class="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+      </svg>
+      Conversion Funnel
+    </h3>
+    <div class="space-y-3">
+      {(() => {
+        const stages = [
+          { label: 'New', ...analytics.funnel.new, color: 'bg-blue-500', textColor: 'text-blue-600' },
+          { label: 'Reviewed', ...analytics.funnel.reviewed, color: 'bg-yellow-500', textColor: 'text-yellow-600' },
+          { label: 'Quoted', ...analytics.funnel.quoted, color: 'bg-purple-500', textColor: 'text-purple-600' },
+          { label: 'Won', ...analytics.funnel.won, color: 'bg-green-500', textColor: 'text-green-600' },
+          { label: 'Lost', ...analytics.funnel.lost, color: 'bg-red-500', textColor: 'text-red-600' },
+        ];
+        const maxCount = Math.max(...stages.map(s => s.count), 1);
+        
+        return stages.map((stage) => {
+          const width = Math.max((stage.count / maxCount) * 100, 2);
+          return (
+            <div>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="text-zinc-600">{stage.label}</span>
+                <div class="flex items-center gap-3">
+                  <span class={`font-semibold ${stage.textColor}`}>{stage.count}</span>
+                  {stage.value > 0 && (
+                    <span class="text-xs text-zinc-400">{formatCurrency(stage.value)}</span>
+                  )}
+                </div>
+              </div>
+              <div class="h-3 bg-zinc-100 rounded-full overflow-hidden">
+                <div
+                  class={`h-full ${stage.color} rounded-full transition-all duration-700`}
+                  style={`width: ${width}%`}
+                />
               </div>
             </div>
-            <div class="h-3 rounded-full bg-zinc-100 overflow-hidden">
-              <div class={`h-full rounded-full ${stage.color} transition-all duration-500`} style={`width: ${(stage.count / maxFunnelCount * 100).toFixed(1)}%`}></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
-      <h3 class="text-sm font-bold text-zinc-900 mb-4">Quote Trend (6 Months)</h3>
-      <div class="flex items-end justify-between gap-2" style="height: 160px;">
-        {months.map((month) => (
-          <div class="flex flex-1 flex-col items-center gap-1">
-            <span class="text-xs font-bold text-zinc-900">{month.count}</span>
-            <div class="w-full rounded-t bg-primary/20 relative" style={`height: ${Math.max((month.count / maxMonthCount * 120), 4)}px;`}>
-              <div class="absolute inset-0 rounded-t bg-primary" style={`height: ${Math.max((month.count / maxMonthCount * 100), month.count > 0 ? 20 : 0)}%`}></div>
-            </div>
-            <span class="text-[10px] text-zinc-400 text-center leading-tight">{month.label}</span>
-          </div>
-        ))}
-      </div>
+          );
+        });
+      })()}
     </div>
   </div>
 
-  <div class="mb-8 grid gap-6 lg:grid-cols-2">
-    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
-      <h3 class="text-sm font-bold text-zinc-900 mb-4">Top Products</h3>
-      <div class="space-y-3">
-        {topProducts.map((product) => (
-          <div>
-            <div class="flex items-center justify-between text-sm mb-1">
-              <span class="font-medium text-zinc-700">{product.name}</span>
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-zinc-900">{product.count}</span>
+  <!-- Monthly Trend -->
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <h3 class="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+      <svg class="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+      </svg>
+      Quote Trend (6 Months)
+    </h3>
+    {analytics.monthlyTrend.length === 0 ? (
+      <p class="text-sm text-zinc-400 text-center py-8">No trend data yet</p>
+    ) : (
+      <div class="h-40 flex items-end justify-between gap-2 pt-4">
+        {(() => {
+          const maxCount = Math.max(...analytics.monthlyTrend.map(m => m.count), 1);
+          return analytics.monthlyTrend.map((month) => {
+            const height = Math.max((month.count / maxCount) * 100, 5);
+            return (
+              <div class="flex-1 flex flex-col items-center gap-1">
+                <span class="text-xs font-semibold text-zinc-900">{month.count}</span>
+                <div class="w-full bg-zinc-100 rounded-t-lg relative" style="height: 120px;">
+                  <div 
+                    class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary to-green-400 rounded-t-lg transition-all duration-700"
+                    style={`height: ${height}%`}
+                  />
+                </div>
+                <span class="text-[10px] text-zinc-500 font-medium">{month.month}</span>
               </div>
-            </div>
-            <div class="h-2 rounded-full bg-zinc-100 overflow-hidden">
-              <div class="h-full rounded-full bg-primary transition-all" style={`width: ${(product.count / maxProductCount * 100).toFixed(1)}%`}></div>
-            </div>
-          </div>
-        ))}
-        {topProducts.length === 0 && <p class="text-sm text-zinc-400">No data yet.</p>}
+            );
+          });
+        })()}
       </div>
-    </div>
-
-    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
-      <h3 class="text-sm font-bold text-zinc-900 mb-4">Geographic Distribution</h3>
-      <div class="space-y-3">
-        {geoData.map((geo) => (
-          <div class="flex items-center justify-between text-sm">
-            <span class="font-medium text-zinc-700">{geo.name}</span>
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-zinc-900">{geo.count}</span>
-              <span class="text-xs text-zinc-400">({geo.percentage}%)</span>
-            </div>
-          </div>
-        ))}
-        {geoData.length === 0 && <p class="text-sm text-zinc-400">Coming soon.</p>}
-      </div>
-    </div>
+    )}
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <div>
-      <div class="mb-4 grid grid-cols-4 gap-3">
-        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
-          <p class="text-lg font-bold text-zinc-900">{totalContacts}</p>
-          <p class="text-[10px] text-zinc-500">Total Contacts</p>
-        </div>
-        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
-          <p class="text-lg font-bold text-zinc-900">{unreadContacts}</p>
-          <p class="text-[10px] text-zinc-500">New (Unread)</p>
-        </div>
-        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
-          <p class="text-lg font-bold text-zinc-900">{waitingChats}</p>
-          <p class="text-[10px] text-zinc-500">Waiting Chats</p>
-        </div>
-        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
-          <p class="text-lg font-bold text-zinc-900">{activeChats}</p>
-          <p class="text-[10px] text-zinc-500">Active Chats</p>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200">
-        <h3 class="px-5 py-3 text-sm font-bold text-zinc-900 border-b border-zinc-100">Live Chat Sessions</h3>
-        <div class="divide-y divide-zinc-50">
-          {chats.length === 0 && <p class="px-5 py-6 text-sm text-zinc-400 text-center">No chat sessions yet.</p>}
-          {chats.map((chat) => (
-            <a href={`/admin/chat/${chat.id}`} class="flex items-center justify-between px-5 py-3 hover:bg-zinc-50 transition">
+  <!-- Products Breakdown -->
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <h3 class="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+      <svg class="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+      Top Products
+    </h3>
+    {analytics.products.length === 0 ? (
+      <p class="text-sm text-zinc-400 text-center py-8">No product data yet</p>
+    ) : (
+      <div class="space-y-3">
+        {(() => {
+          const colors = ['bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500'];
+          const maxCount = Math.max(...analytics.products.map(p => p.count), 1);
+          
+          return analytics.products.slice(0, 5).map((product, idx) => {
+            const width = (product.count / maxCount) * 100;
+            return (
               <div>
-                <p class="text-sm font-medium text-zinc-900">{chat.visitor_name || 'Anonymous Visitor'}</p>
-                <p class="text-xs text-zinc-500">{chat.visitor_email || ''}</p>
+                <div class="flex items-center justify-between text-sm mb-1">
+                  <span class="text-zinc-700 font-medium">{product.product}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-zinc-900 font-semibold">{product.count}</span>
+                    <span class="text-xs text-zinc-400">avg: {product.avgQuantity.toLocaleString()} pcs</span>
+                  </div>
+                </div>
+                <div class="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                  <div
+                    class={`h-full ${colors[idx % colors.length]} rounded-full transition-all duration-500`}
+                    style={`width: ${width}%`}
+                  />
+                </div>
               </div>
-              <div class="text-right">
-                <span class={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${chat.status === 'active' ? 'bg-green-100 text-green-700' : chat.status === 'waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                  {chat.status}
-                </span>
-                <p class="text-[10px] text-zinc-400 mt-0.5">{formatDate(chat.created_at)}</p>
-              </div>
-            </a>
-          ))}
-        </div>
+            );
+          });
+        })()}
       </div>
-    </div>
+    )}
+  </div>
 
-    <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200">
-      <h3 class="px-5 py-3 text-sm font-bold text-zinc-900 border-b border-zinc-100">Contact Submissions</h3>
-      <div class="divide-y divide-zinc-50">
-        {contactList.length === 0 && <p class="px-5 py-6 text-sm text-zinc-400 text-center">No contact submissions yet.</p>}
-        {contactList.map((contact) => (
-          <div class="px-5 py-3 hover:bg-zinc-50 transition">
-            <div class="flex items-center justify-between mb-1">
-              <p class="text-sm font-medium text-zinc-900">{contact.name}</p>
-              <div class="flex items-center gap-2">
-                <span class={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${contact.status === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                  {contact.status}
-                </span>
-                {contact.status === 'new' && (
-                  <button
-                    onclick={`fetch('/api/admin/contact-status', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:'${contact.id}',status:'read'}), credentials:'include'}).then(()=>location.reload())`}
-                    class="text-[10px] px-2 py-1 rounded bg-primary text-white hover:bg-primary-light transition"
-                  >
-                    Mark Read
-                  </button>
-                )}
+  <!-- Geographic Distribution -->
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <h3 class="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+      <svg class="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Geographic Distribution
+    </h3>
+    {analytics.geography.length === 0 ? (
+      <p class="text-sm text-zinc-400 text-center py-8">No geographic data yet</p>
+    ) : (
+      <div class="space-y-3">
+        {(() => {
+          const colors = [
+            { bg: 'bg-blue-500', text: 'text-blue-600' },
+            { bg: 'bg-green-500', text: 'text-green-600' },
+            { bg: 'bg-amber-500', text: 'text-amber-600' },
+            { bg: 'bg-purple-500', text: 'text-purple-600' },
+            { bg: 'bg-pink-500', text: 'text-pink-600' },
+          ];
+          const maxCount = Math.max(...analytics.geography.map(g => g.count), 1);
+          
+          return analytics.geography.map((geo, idx) => {
+            const width = (geo.count / maxCount) * 100;
+            const color = colors[idx % colors.length];
+            return (
+              <div>
+                <div class="flex items-center justify-between text-sm mb-1">
+                  <div class="flex items-center gap-2">
+                    <div class={`w-2.5 h-2.5 rounded-full ${color.bg}`}></div>
+                    <span class="text-zinc-700">{geo.country}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class={`font-semibold ${color.text}`}>{geo.count}</span>
+                    <span class="text-xs text-zinc-400">({geo.percentage}%)</span>
+                  </div>
+                </div>
+                <div class="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                  <div
+                    class={`h-full ${color.bg} rounded-full transition-all duration-500`}
+                    style={`width: ${width}%`}
+                  />
+                </div>
               </div>
-            </div>
-            <p class="text-xs text-zinc-500">{formatDate(contact.created_at)}</p>
-            <p class="text-xs text-zinc-500">{contact.email} {contact.company ? `• ${contact.company}` : ''}</p>
-            {contact.message && <p class="text-xs text-zinc-600 mt-1 line-clamp-2">{contact.message}</p>}
+            );
+          });
+        })()}
+      </div>
+    )}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     OLDEST UNREAD QUOTES (URGENT ATTENTION)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+{analytics.oldestUnread && analytics.oldestUnread.length > 0 && (
+  <div class="mb-8">
+    <h2 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+      <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      Awaiting Response
+      <span class="ml-2 px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+        {analytics.oldestUnread.length} unread
+      </span>
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+      {analytics.oldestUnread.map((quote) => (
+        <a
+          href={`/admin/quote/${quote.id}`}
+          class="bg-white rounded-xl border border-amber-200 p-4 hover:border-amber-400 hover:shadow-md transition-all group"
+        >
+          <div class="flex items-start justify-between mb-2">
+            <span class="text-xs font-mono text-zinc-400">{quote.reference_number}</span>
+            <span class={`text-xs font-bold px-1.5 py-0.5 rounded ${
+              quote.hoursWaiting > 48 ? 'bg-red-100 text-red-700' :
+              quote.hoursWaiting > 24 ? 'bg-amber-100 text-amber-700' :
+              'bg-blue-100 text-blue-700'
+            }`}>
+              {quote.hoursWaiting}h
+            </span>
           </div>
-        ))}
+          <p class="text-sm font-medium text-zinc-900 truncate group-hover:text-primary transition-colors">
+            {quote.company_name}
+          </p>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CONTACT & CHAT STATS
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm text-zinc-500">Total Contacts</p>
+        <p class="text-2xl font-bold text-zinc-900">{contacts.length}</p>
       </div>
     </div>
   </div>
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm text-zinc-500">New (Unread)</p>
+        <p class="text-2xl font-bold text-blue-600">{newContacts}</p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50 text-yellow-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm text-zinc-500">Waiting Chats</p>
+        <p class="text-2xl font-bold text-amber-600">{waitingChats}</p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-zinc-200 p-5">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm text-zinc-500">Active Chats</p>
+        <p class="text-2xl font-bold text-green-600">{activeChats}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CHAT SESSIONS & CONTACT SUBMISSIONS
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+  <!-- Chat Sessions -->
+  <div>
+    <h2 class="flex items-center gap-2 text-lg font-semibold text-zinc-900 mb-4">
+      <svg class="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+      Live Chat Sessions
+    </h2>
+    <div class="space-y-3">
+      {sessions.length === 0 && (
+        <div class="bg-white rounded-xl border border-zinc-200 p-6 text-center text-zinc-400 text-sm">
+          No chat sessions yet.
+        </div>
+      )}
+      {sessions.slice(0, 5).map((session) => (
+        <a
+          href={`/admin/chat/${session.id}`}
+          class="block bg-white rounded-xl border border-zinc-200 p-4 hover:border-primary/50 hover:shadow-md transition-all"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-zinc-900">
+                {session.visitor_name || 'Anonymous Visitor'}
+              </span>
+              <span class={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                session.status === 'waiting' ? 'bg-amber-100 text-amber-700' :
+                session.status === 'active' ? 'bg-green-100 text-green-700' :
+                'bg-zinc-100 text-zinc-500'
+              }`}>
+                {session.status}
+              </span>
+            </div>
+            <span class="text-xs text-zinc-400">
+              {new Date(session.created_at).toLocaleString()}
+            </span>
+          </div>
+          {session.visitor_email && (
+            <p class="text-xs text-zinc-500">{session.visitor_email}</p>
+          )}
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <!-- Contact Submissions -->
+  <div>
+    <h2 class="flex items-center gap-2 text-lg font-semibold text-zinc-900 mb-4">
+      <svg class="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      Contact Submissions
+    </h2>
+    <div class="space-y-3">
+      {contacts.length === 0 && (
+        <div class="bg-white rounded-xl border border-zinc-200 p-6 text-center text-zinc-400 text-sm">
+          No submissions yet.
+        </div>
+      )}
+      {contacts.slice(0, 5).map((contact) => (
+        <div class="bg-white rounded-xl border border-zinc-200 p-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-zinc-900">{contact.name}</span>
+            <div class="flex items-center gap-2">
+              <span class={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                contact.status === 'new' ? 'bg-blue-100 text-blue-700' :
+                contact.status === 'read' ? 'bg-zinc-100 text-zinc-500' :
+                'bg-green-100 text-green-700'
+              }`}>
+                {contact.status}
+              </span>
+              <span class="text-xs text-zinc-400">
+                {new Date(contact.created_at).toLocaleString()}
+              </span>
+            </div>
+          </div>
+          <p class="text-xs text-zinc-500 mb-1">{contact.email} {contact.company ? `• ${contact.company}` : ''}</p>
+          <p class="text-sm text-zinc-600 line-clamp-2">{contact.message}</p>
+
+          {contact.status === 'new' && (
+            <button
+              data-contact-id={contact.id}
+              class="mark-read-btn mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary hover:text-white transition-colors"
+            >
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Mark as Read
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+
+</div>
+
+<script is:inline>
+  document.querySelectorAll('.mark-read-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-contact-id');
+      const res = await fetch('/api/admin/contact-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: 'read' }),
+        credentials: 'include'
+      });
+      if (res.ok) {
+        btn.innerHTML = '<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg> Read';
+        btn.disabled = true;
+        btn.classList.remove('text-primary', 'border-primary/30', 'hover:bg-primary', 'hover:text-white');
+        btn.classList.add('text-zinc-400', 'border-zinc-200');
+      }
+    });
+  });
+</script>
 
 </AdminLayout>
