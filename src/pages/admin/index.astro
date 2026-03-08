@@ -11,16 +11,30 @@ const supabase = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-// ── Fetch all quotes ──
-const { data: allQuotes } = await supabase
-  .from('quote_requests')
-  .select('id, reference_number, product_type, quantity, status, destination, created_at, estimated_price_range, company_name, contact_person, email')
-  .order('created_at', { ascending: false });
+// ── Run ALL queries in PARALLEL (much faster!) ──
+const [quotesResult, chatsResult, contactsResult] = await Promise.all([
+  supabase
+    .from('quote_requests')
+    .select('id, reference_number, product_type, quantity, status, destination, created_at, estimated_price_range, company_name, contact_person, email')
+    .order('created_at', { ascending: false })
+    .limit(100),
+  supabase
+    .from('chat_sessions')
+    .select('id, visitor_name, visitor_email, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5),
+  supabase
+    .from('contact_submissions')
+    .select('id, name, email, company, message, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(10),
+]);
 
-const quotes = allQuotes || [];
-console.log(`📊 Analyzing ${quotes.length} quotes...`);
+const quotes = quotesResult.data || [];
+const chats = chatsResult.data || [];
+const contactList = contactsResult.data || [];
 
-// ── Stats ──
+// ── Stats (computed from data, no extra queries) ──
 const totalQuotes = quotes.length;
 const now = new Date();
 const thisMonth = quotes.filter(q => {
@@ -38,7 +52,6 @@ const convertedCount = statusCounts['converted'] || 0;
 const rejectedCount = statusCounts['rejected'] || 0;
 const activeQuotes = newCount + reviewedCount + quotedCount;
 
-// Pipeline value (sum estimated prices)
 let pipelineValue = 0;
 quotes.forEach(q => {
   if (q.estimated_price_range && q.status !== 'rejected' && q.status !== 'converted') {
@@ -47,13 +60,9 @@ quotes.forEach(q => {
   }
 });
 
-// Avg response time
 const avgResponseHours = totalQuotes > 0 ? '< 1 hr' : 'N/A';
-
-// Conversion rate
 const conversionRate = totalQuotes > 0 ? ((convertedCount / totalQuotes) * 100).toFixed(1) : '0';
 
-// ── Funnel data ──
 const funnelStages = [
   { label: 'New', count: newCount, value: 0, color: 'bg-blue-500' },
   { label: 'Reviewed', count: reviewedCount, value: 0, color: 'bg-yellow-500' },
@@ -62,7 +71,6 @@ const funnelStages = [
   { label: 'Lost', count: rejectedCount, value: 0, color: 'bg-red-500' },
 ];
 
-// Calculate value per stage
 quotes.forEach(q => {
   const match = q.estimated_price_range?.match(/\$([\d,]+)/);
   const val = match ? parseInt(match[1].replace(/,/g, '')) : 0;
@@ -79,7 +87,6 @@ quotes.forEach(q => {
 
 const maxFunnelCount = Math.max(...funnelStages.map(s => s.count), 1);
 
-// ── Monthly trend (last 6 months) ──
 const months: { label: string; count: number }[] = [];
 for (let i = 5; i >= 0; i--) {
   const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -92,7 +99,6 @@ for (let i = 5; i >= 0; i--) {
 }
 const maxMonthCount = Math.max(...months.map(m => m.count), 1);
 
-// ── Top products ──
 const productCounts: Record<string, { count: number; totalQty: number }> = {};
 quotes.forEach(q => {
   if (!productCounts[q.product_type]) productCounts[q.product_type] = { count: 0, totalQty: 0 };
@@ -105,7 +111,6 @@ const topProducts = Object.entries(productCounts)
   .slice(0, 5);
 const maxProductCount = Math.max(...topProducts.map(p => p.count), 1);
 
-// ── Geographic distribution ──
 const geoCounts: Record<string, number> = {};
 quotes.forEach(q => {
   const dest = q.destination || 'unknown';
@@ -116,25 +121,8 @@ const geoData = Object.entries(geoCounts)
   .map(([name, count]) => ({ name, count, percentage: ((count / totalQuotes) * 100).toFixed(1) }))
   .sort((a, b) => b.count - a.count);
 
-// ── Chat sessions ──
-const { data: chatSessions } = await supabase
-  .from('chat_sessions')
-  .select('id, visitor_name, visitor_email, status, created_at')
-  .order('created_at', { ascending: false })
-  .limit(5);
-
-const chats = chatSessions || [];
 const waitingChats = chats.filter(c => c.status === 'waiting').length;
 const activeChats = chats.filter(c => c.status === 'active').length;
-
-// ── Contact submissions ──
-const { data: contacts } = await supabase
-  .from('contact_submissions')
-  .select('id, name, email, company, message, status, created_at')
-  .order('created_at', { ascending: false })
-  .limit(10);
-
-const contactList = contacts || [];
 const totalContacts = contactList.length;
 const unreadContacts = contactList.filter(c => c.status === 'new').length;
 
@@ -148,7 +136,6 @@ function formatDate(iso: string): string {
 
 <AdminLayout title="Dashboard">
 
-  <!-- Stats Cards -->
   <div class="mb-6 flex items-center justify-between">
     <h2 class="text-lg font-bold text-zinc-900">Quote Analytics</h2>
     <a href="/admin/quotes" class="text-sm text-primary hover:underline">View all</a>
@@ -182,7 +169,6 @@ function formatDate(iso: string): string {
     </div>
   </div>
 
-  <!-- Email Follow-Ups -->
   <div class="mb-8 rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
     <h2 class="text-sm font-bold text-zinc-900 mb-2">Email Follow-Ups</h2>
     <p class="text-sm text-zinc-600 mb-2">
@@ -196,10 +182,7 @@ function formatDate(iso: string): string {
     <ManualTriggerButton />
   </div>
 
-  <!-- Charts Grid -->
   <div class="mb-8 grid gap-6 lg:grid-cols-2">
-
-    <!-- Conversion Funnel -->
     <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
       <h3 class="text-sm font-bold text-zinc-900 mb-4">Conversion Funnel</h3>
       <div class="space-y-3">
@@ -220,7 +203,6 @@ function formatDate(iso: string): string {
       </div>
     </div>
 
-    <!-- Monthly Trend -->
     <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
       <h3 class="text-sm font-bold text-zinc-900 mb-4">Quote Trend (6 Months)</h3>
       <div class="flex items-end justify-between gap-2" style="height: 160px;">
@@ -237,10 +219,7 @@ function formatDate(iso: string): string {
     </div>
   </div>
 
-  <!-- Products & Geography -->
   <div class="mb-8 grid gap-6 lg:grid-cols-2">
-
-    <!-- Top Products -->
     <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
       <h3 class="text-sm font-bold text-zinc-900 mb-4">Top Products</h3>
       <div class="space-y-3">
@@ -262,7 +241,6 @@ function formatDate(iso: string): string {
       </div>
     </div>
 
-    <!-- Geographic Distribution -->
     <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
       <h3 class="text-sm font-bold text-zinc-900 mb-4">Geographic Distribution</h3>
       <div class="space-y-3">
@@ -280,10 +258,7 @@ function formatDate(iso: string): string {
     </div>
   </div>
 
-  <!-- Bottom Row: Chats & Contacts -->
   <div class="grid gap-6 lg:grid-cols-2">
-
-    <!-- Left Column: Stats + Chat Sessions -->
     <div>
       <div class="mb-4 grid grid-cols-4 gap-3">
         <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
@@ -304,7 +279,6 @@ function formatDate(iso: string): string {
         </div>
       </div>
 
-      <!-- Live Chat Sessions -->
       <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200">
         <h3 class="px-5 py-3 text-sm font-bold text-zinc-900 border-b border-zinc-100">Live Chat Sessions</h3>
         <div class="divide-y divide-zinc-50">
@@ -327,7 +301,6 @@ function formatDate(iso: string): string {
       </div>
     </div>
 
-    <!-- Right Column: Contact Submissions -->
     <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200">
       <h3 class="px-5 py-3 text-sm font-bold text-zinc-900 border-b border-zinc-100">Contact Submissions</h3>
       <div class="divide-y divide-zinc-50">

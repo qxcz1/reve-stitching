@@ -1,32 +1,71 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getTemplateSettings } from '../../../lib/email-templates/template-storage';
+import { generateQuoteUnderReviewEmail } from '../../../lib/email-templates/quote-under-review';
+import { generateAdminReminderEmail } from '../../../lib/email-templates/admin-reminder';
+import { generateReengagementEmail } from '../../../lib/email-templates/quote-reengagement';
 
 export const prerender = false;
 
 const settings = await getTemplateSettings();
+
+// Sample data for preview
+const sampleQuote = {
+  reference_number: 'RQ-20260308-DEMO',
+  company_name: 'Example Fashion Ltd',
+  contact_person: 'John Smith',
+  email: 'john@example.com',
+  phone: '+44 7700 900123',
+  product_type: 'hoodies',
+  quantity: 2500,
+  estimated_price_range: '$12,000 - $18,500',
+  created_at: new Date().toISOString(),
+};
+
+// Get which template to preview from URL
+const previewId = Astro.url.searchParams.get('preview');
+
+let previewHtml = '';
+let previewSubject = '';
+
+if (previewId === '24h') {
+  const result = generateQuoteUnderReviewEmail(sampleQuote as any);
+  previewHtml = result.html;
+  previewSubject = result.subject;
+} else if (previewId === '48h') {
+  const result = generateAdminReminderEmail(sampleQuote as any);
+  previewHtml = result.html;
+  previewSubject = result.subject;
+} else if (previewId === '7d') {
+  const result = generateReengagementEmail(sampleQuote as any);
+  previewHtml = result.html;
+  previewSubject = result.subject;
+}
 
 const templates = [
   {
     id: '24h',
     name: '24-Hour Buyer Follow-Up',
     description: 'Sent to the buyer 24 hours after quote submission if still unread.',
-    subject: 'Your Quote RQ-XXXXXXXX Is Under Review — ' + settings.company_name,
     trigger: 'Auto: 24h after submission, status = new',
+    recipient: 'Buyer',
+    icon: '📧',
   },
   {
     id: '48h',
     name: '48-Hour Admin Reminder',
     description: 'Sent to the admin team when a quote has no response after 48 hours.',
-    subject: '⚠️ PENDING: Quote RQ-XXXXXXXX — No Response in 48h',
     trigger: 'Auto: 48h after submission, status = new',
+    recipient: 'Admin Team',
+    icon: '⚠️',
   },
   {
     id: '7d',
     name: '7-Day Re-engagement',
     description: 'Sent to the buyer after 7 days if the quote is still unread.',
-    subject: 'Still interested in [product]? — Quote RQ-XXXXXXXX',
     trigger: 'Auto: 7 days after submission, status = new',
+    recipient: 'Buyer',
+    icon: '🔄',
   },
 ];
 ---
@@ -36,7 +75,7 @@ const templates = [
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold text-zinc-900">Email Templates</h1>
-      <p class="mt-1 text-sm text-zinc-500">Manage and customize automated email templates.</p>
+      <p class="mt-1 text-sm text-zinc-500">Preview and customize automated email templates.</p>
     </div>
     <a href="/admin/email-templates/edit" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow hover:bg-primary-light transition">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -60,55 +99,144 @@ const templates = [
       <div class="flex-1"></div>
       <div class="text-right text-xs text-zinc-400">
         <p>Color: <span class="font-mono">{settings.brand_color}</span></p>
-        <p>Last updated: {new Date(settings.updated_at).toLocaleDateString()}</p>
+        <p>Updated: {new Date(settings.updated_at).toLocaleDateString()}</p>
       </div>
     </div>
   </div>
 
   <!-- Template List -->
-  <div class="grid gap-6 lg:grid-cols-3">
+  <h2 class="text-sm font-bold text-zinc-900 mb-4">Email Templates</h2>
+  <div class="grid gap-4 lg:grid-cols-3 mb-8">
     {templates.map((tpl) => (
-      <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+      <div class={`rounded-xl bg-white p-5 shadow ring-1 ${previewId === tpl.id ? 'ring-primary ring-2' : 'ring-zinc-200'}`}>
         <div class="flex items-start justify-between mb-3">
-          <h3 class="text-sm font-bold text-zinc-900">{tpl.name}</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">{tpl.icon}</span>
+            <h3 class="text-sm font-bold text-zinc-900">{tpl.name}</h3>
+          </div>
           <span class="inline-block rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Active</span>
         </div>
-        <p class="text-xs text-zinc-500 mb-4">{tpl.description}</p>
-        <div class="space-y-2 text-xs">
-          <div>
-            <span class="text-zinc-400">Subject:</span>
-            <p class="text-zinc-700 font-medium">{tpl.subject}</p>
-          </div>
-          <div>
-            <span class="text-zinc-400">Trigger:</span>
-            <p class="text-zinc-600">{tpl.trigger}</p>
-          </div>
+        <p class="text-xs text-zinc-500 mb-3">{tpl.description}</p>
+        <div class="text-xs text-zinc-400 mb-4">
+          <span class="inline-block bg-zinc-100 rounded px-2 py-0.5">{tpl.recipient}</span>
+          <span class="mx-1">•</span>
+          <span>{tpl.trigger.replace('Auto: ', '')}</span>
+        </div>
+        <div class="flex gap-2">
+          <a
+            href={`/admin/email-templates?preview=${tpl.id}`}
+            class={`flex-1 text-center rounded-lg px-3 py-2 text-xs font-medium transition ${
+              previewId === tpl.id
+                ? 'bg-primary text-white'
+                : 'border border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+            }`}
+          >
+            <svg class="h-3.5 w-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            Preview
+          </a>
         </div>
       </div>
     ))}
   </div>
 
+  <!-- Email Preview Section -->
+  {previewHtml && (
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-zinc-900">
+            {templates.find(t => t.id === previewId)?.name} Preview
+          </h2>
+          <p class="text-xs text-zinc-500 mt-1">
+            <strong>Subject:</strong> {previewSubject}
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button
+            id="send-test-btn"
+            data-template={previewId}
+            class="inline-flex items-center gap-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition"
+          >
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Send Test Email
+          </button>
+          <a href="/admin/email-templates" class="inline-flex items-center gap-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            Close Preview
+          </a>
+        </div>
+      </div>
+      <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200 overflow-hidden">
+        <div class="bg-zinc-100 px-4 py-2 border-b border-zinc-200 flex items-center gap-4 text-xs text-zinc-500">
+          <span><strong>From:</strong> {settings.company_name} &lt;notifications@revestitching.com&gt;</span>
+          <span><strong>To:</strong> {previewId === '48h' ? 'Admin Team' : 'john@example.com'}</span>
+        </div>
+        <iframe
+          srcdoc={previewHtml}
+          class="w-full border-0"
+          style="height: 700px;"
+          title="Email Preview"
+        ></iframe>
+      </div>
+    </div>
+  )}
+
   <!-- Info -->
-  <div class="mt-8 rounded-xl bg-zinc-50 p-6 ring-1 ring-zinc-200">
+  <div class="rounded-xl bg-zinc-50 p-6 ring-1 ring-zinc-200">
     <h3 class="text-sm font-bold text-zinc-900 mb-2">How It Works</h3>
     <ul class="text-sm text-zinc-600 space-y-2">
       <li class="flex items-start gap-2">
         <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        <span>Emails are sent automatically based on quote age and status</span>
+        <span>Click <strong>"Preview"</strong> on any template to see the full email with sample data</span>
       </li>
       <li class="flex items-start gap-2">
         <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        <span>Branding changes (logo, colors, footer) apply to <strong>all</strong> email types</span>
+        <span>Click <strong>"Edit Branding"</strong> to change logo, colors, and footer for all emails</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span>Click <strong>"Send Test Email"</strong> to receive a sample in your inbox</span>
       </li>
       <li class="flex items-start gap-2">
         <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
         <span>Each quote only receives each email type <strong>once</strong> (no duplicates)</span>
       </li>
-      <li class="flex items-start gap-2">
-        <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        <span>Emails stop automatically when quote status changes from "new"</span>
-      </li>
     </ul>
   </div>
 
 </AdminLayout>
+
+<script is:inline>
+  document.getElementById('send-test-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    const templateId = btn.dataset.template;
+    
+    const email = prompt('Enter email address to send test to:', 'hamzali.revesystems@gmail.com');
+    if (!email) return;
+    
+    btn.disabled = true;
+    btn.innerHTML = 'Sending...';
+    
+    try {
+      const response = await fetch('/api/admin/send-test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, email }),
+        credentials: 'include',
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('Test email sent to ' + email + '!\n\nCheck your inbox (and spam folder).');
+      } else {
+        alert('Error: ' + (result.error || 'Failed to send'));
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="h-3.5 w-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send Test Email';
+  });
+</script>
