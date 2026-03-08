@@ -109,7 +109,14 @@ const adminEmail = admin?.sub || '';
           btn.textContent = 'Logging out...';
         }
         try {
-          await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+          await fetch('/api/auth/logout', { 
+            method: 'POST', 
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include' 
+          });
         } catch (e) {}
         window.location.href = '/admin/login';
       });

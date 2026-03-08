@@ -183,6 +183,10 @@ const isActive = quoteStatus === 'new';
       try {
         const res = await fetch('/api/admin/trigger-follow-ups', {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           credentials: 'include',
         });
         const data = await res.json();
