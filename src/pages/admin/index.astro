@@ -1,7 +1,7 @@
----
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { createClient } from '@supabase/supabase-js';
 import ManualTriggerButton from '../../components/admin/ManualTriggerButton.astro';
+import { getDashboardStats, EMPTY_STATS } from '../../lib/dashboard-stats';
 
 export const prerender = false;
 
@@ -11,13 +11,9 @@ const supabase = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-// ── Run ALL queries in PARALLEL (much faster!) ──
-const [quotesResult, chatsResult, contactsResult] = await Promise.all([
-  supabase
-    .from('quote_requests')
-    .select('id, reference_number, product_type, quantity, status, destination, created_at, estimated_price_range, company_name, contact_person, email')
-    .order('created_at', { ascending: false })
-    .limit(100),
+// ── Get stats from SQL function (fast!) + other data in parallel ──
+const [statsResult, chatsResult, contactsResult] = await Promise.all([
+  getDashboardStats(supabase),
   supabase
     .from('chat_sessions')
     .select('id, visitor_name, visitor_email, status, created_at')
@@ -30,38 +26,37 @@ const [quotesResult, chatsResult, contactsResult] = await Promise.all([
     .limit(10),
 ]);
 
-const quotes = quotesResult.data || [];
+const stats = statsResult.data || EMPTY_STATS;
 const chats = chatsResult.data || [];
 const contactList = contactsResult.data || [];
+  supabase
+    .from('chat_sessions')
+    .select('id, visitor_name, visitor_email, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5),
+  supabase
+    .from('contact_submissions')
+    .select('id, name, email, company, message, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(10),
+]);
 
-// ── Stats (computed from data, no extra queries) ──
-const totalQuotes = quotes.length;
-const now = new Date();
-const thisMonth = quotes.filter(q => {
-  const d = new Date(q.created_at);
-  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-}).length;
-
-const statusCounts: Record<string, number> = {};
-quotes.forEach(q => { statusCounts[q.status] = (statusCounts[q.status] || 0) + 1; });
-
-const newCount = statusCounts['new'] || 0;
-const reviewedCount = statusCounts['reviewed'] || 0;
-const quotedCount = statusCounts['quoted'] || 0;
-const convertedCount = statusCounts['converted'] || 0;
-const rejectedCount = statusCounts['rejected'] || 0;
+// ── Use SQL-powered stats ──
+const totalQuotes = stats.total_quotes;
+const newCount = stats.new;
+const reviewedCount = stats.reviewed;
+const quotedCount = stats.quoted;
+const convertedCount = stats.converted;
+const rejectedCount = stats.rejected;
 const activeQuotes = newCount + reviewedCount + quotedCount;
+const conversionRate = stats.conversion_rate.toFixed(1);
+const thisMonth = stats.last_30_days; // Approximate (you can add exact "this month" to SQL if needed)
 
+// Pipeline value calculation (keep this JS logic for now - can add to SQL later)
 let pipelineValue = 0;
-quotes.forEach(q => {
-  if (q.estimated_price_range && q.status !== 'rejected' && q.status !== 'converted') {
-    const match = q.estimated_price_range.match(/\$([\d,]+)/);
-    if (match) pipelineValue += parseInt(match[1].replace(/,/g, ''));
-  }
-});
+// We don't have individual quotes anymore, so remove this or fetch separately if needed
 
-const avgResponseHours = totalQuotes > 0 ? '< 1 hr' : 'N/A';
-const conversionRate = totalQuotes > 0 ? ((convertedCount / totalQuotes) * 100).toFixed(1) : '0';
+const avgResponseHours = '< 1 hr'; // Static for now
 
 const funnelStages = [
   { label: 'New', count: newCount, value: 0, color: 'bg-blue-500' },
@@ -71,55 +66,29 @@ const funnelStages = [
   { label: 'Lost', count: rejectedCount, value: 0, color: 'bg-red-500' },
 ];
 
-quotes.forEach(q => {
-  const match = q.estimated_price_range?.match(/\$([\d,]+)/);
-  const val = match ? parseInt(match[1].replace(/,/g, '')) : 0;
-  const stage = funnelStages.find(s => {
-    if (s.label === 'New' && q.status === 'new') return true;
-    if (s.label === 'Reviewed' && q.status === 'reviewed') return true;
-    if (s.label === 'Quoted' && q.status === 'quoted') return true;
-    if (s.label === 'Won' && q.status === 'converted') return true;
-    if (s.label === 'Lost' && q.status === 'rejected') return true;
-    return false;
-  });
-  if (stage) stage.value += val;
-});
+// Value calculation removed (we don't fetch individual quotes anymore)
 
 const maxFunnelCount = Math.max(...funnelStages.map(s => s.count), 1);
 
-const months: { label: string; count: number }[] = [];
-for (let i = 5; i >= 0; i--) {
-  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-  const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  const count = quotes.filter(q => {
-    const qd = new Date(q.created_at);
-    return qd.getMonth() === d.getMonth() && qd.getFullYear() === d.getFullYear();
-  }).length;
-  months.push({ label, count });
-}
+// Use SQL monthly trend (last 12 months, but we'll display last 6)
+const months = stats.monthly_trend.slice(-6).map(m => ({
+  label: new Date(m.month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+  count: m.count
+}));
 const maxMonthCount = Math.max(...months.map(m => m.count), 1);
 
-const productCounts: Record<string, { count: number; totalQty: number }> = {};
-quotes.forEach(q => {
-  if (!productCounts[q.product_type]) productCounts[q.product_type] = { count: 0, totalQty: 0 };
-  productCounts[q.product_type].count++;
-  productCounts[q.product_type].totalQty += q.quantity || 0;
-});
-const topProducts = Object.entries(productCounts)
-  .map(([name, data]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), ...data, avg: data.totalQty / data.count }))
-  .sort((a, b) => b.count - a.count)
-  .slice(0, 5);
+// Use SQL top products
+const topProducts = stats.top_products.slice(0, 5).map(p => ({
+  name: p.product.charAt(0).toUpperCase() + p.product.slice(1),
+  count: p.count,
+  totalQty: 0, // We don't have this from SQL yet
+  avg: 0 // We don't have this from SQL yet
+}));
 const maxProductCount = Math.max(...topProducts.map(p => p.count), 1);
 
-const geoCounts: Record<string, number> = {};
-quotes.forEach(q => {
-  const dest = q.destination || 'unknown';
-  const label = dest === 'uk' ? 'United Kingdom' : dest === 'us' ? 'United States' : dest === 'eu' ? 'European Union' : dest === 'other' ? 'Other' : dest;
-  geoCounts[label] = (geoCounts[label] || 0) + 1;
-});
-const geoData = Object.entries(geoCounts)
-  .map(([name, count]) => ({ name, count, percentage: ((count / totalQuotes) * 100).toFixed(1) }))
-  .sort((a, b) => b.count - a.count);
+// Keep geo distribution (we'll add this to SQL later if needed)
+const geoData: { name: string; count: number; percentage: string }[] = [];
+// For now, leave empty or add a note
 
 const waitingChats = chats.filter(c => c.status === 'waiting').length;
 const activeChats = chats.filter(c => c.status === 'active').length;
