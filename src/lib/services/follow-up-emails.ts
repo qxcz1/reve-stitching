@@ -135,7 +135,8 @@ async function send24HourFollowUp(
   console.log(`${tag} Sending to ${quote.email}...`);
 
   try {
-    const { subject, html } = generateQuoteUnderReviewEmail(quote);
+    // ⚠️ AWAIT the async generator
+    const { subject, html } = await generateQuoteUnderReviewEmail(quote);
 
     const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
@@ -184,8 +185,8 @@ async function send48HourAdminReminder(
   console.log(`${tag} Sending admin reminder...`);
 
   try {
-    // 1. Send email to admin
-    const { subject, html } = generateAdminReminderEmail(quote);
+    // ⚠️ AWAIT the async generator
+    const { subject, html } = await generateAdminReminderEmail(quote);
 
     const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
@@ -238,7 +239,8 @@ async function send7DayReengagement(
   console.log(`${tag} Sending re-engagement to ${quote.email}...`);
 
   try {
-    const { subject, html } = generateReengagementEmail(quote);
+    // ⚠️ AWAIT the async generator
+    const { subject, html } = await generateReengagementEmail(quote);
 
     const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
@@ -285,7 +287,7 @@ async function send7DayReengagement(
 /**
  * Check all pending quotes and send follow-up emails as needed.
  *
- * Called by Vercel Cron every 6 hours.
+ * Called by Vercel Cron every day at 9 AM UTC.
  * Processes up to MAX_EMAILS_PER_RUN emails to stay within rate limits.
  */
 export async function checkAndSendFollowUps(

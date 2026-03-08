@@ -1,6 +1,13 @@
 // src/lib/email-templates/quote-under-review.ts
 
 import { emailLayout, emailButton, quoteDetailsBox } from './_layout';
+import {
+  getTemplateContent,
+  TEMPLATE_DEFAULTS,
+  replaceVars,
+  buildVars,
+  type TemplateContent,
+} from './template-storage';
 
 export interface QuoteEmailData {
   contact_person: string;
@@ -18,13 +25,22 @@ export interface QuoteEmailData {
  * Tone: Professional, warm, proactive.
  * Goal: Keep buyer engaged, reduce anxiety about response time.
  */
-export function generateQuoteUnderReviewEmail(quote: QuoteEmailData): {
-  subject: string;
-  html: string;
-} {
-  const firstName = quote.contact_person.split(' ')[0];
+export async function generateQuoteUnderReviewEmail(
+  quote: QuoteEmailData,
+  contentOverride?: TemplateContent | null
+): Promise<{ subject: string; html: string }> {
+  // Get custom content from DB (or use override for preview)
+  const saved = contentOverride !== undefined ? contentOverride : await getTemplateContent('24h');
+  const defaults = TEMPLATE_DEFAULTS['24h'];
+  const vars = buildVars(quote);
 
-  const subject = `Your Quote ${quote.reference_number} Is Under Review — Reve Stitching`;
+  // Apply custom or default content
+  const subject = replaceVars(saved?.subject || defaults.subject, vars);
+  const greeting = replaceVars(saved?.greeting || defaults.greeting, vars);
+  const mainBody = replaceVars(saved?.main_body || defaults.main_body, vars);
+  const ctaText = replaceVars(saved?.cta_text || defaults.cta_text, vars);
+  const footerNote = replaceVars(saved?.footer_note || defaults.footer_note, vars);
+  const firstName = vars.first_name;
 
   const body = `
     <!-- Greeting -->
@@ -32,8 +48,7 @@ export function generateQuoteUnderReviewEmail(quote: QuoteEmailData): {
       Hi ${firstName},
     </h2>
     <p style="margin:0 0 20px;font-size:15px;color:#52525b;line-height:1.6;">
-      Thank you for your interest in Reve Stitching. We wanted to let you know
-      that your quote request is currently being reviewed by our production team.
+      ${greeting}
     </p>
 
     <!-- Status Indicator -->
@@ -44,7 +59,7 @@ export function generateQuoteUnderReviewEmail(quote: QuoteEmailData): {
             <tr>
               <td style="vertical-align:middle;padding-right:12px;">
                 <div style="width:32px;height:32px;background-color:#166534;border-radius:50%;text-align:center;line-height:32px;">
-                  <span style="color:#ffffff;font-size:16px;">✓</span>
+                  <span style="color:#ffffff;font-size:16px;">&#10003;</span>
                 </div>
               </td>
               <td style="vertical-align:middle;">
@@ -105,22 +120,18 @@ export function generateQuoteUnderReviewEmail(quote: QuoteEmailData): {
     </table>
 
     <p style="margin:24px 0 0;font-size:14px;color:#52525b;line-height:1.6;">
-      We aim to send you a detailed quotation within <strong style="color:#18181b;">48 hours</strong>.
-      If your order is urgent, don't hesitate to reach out directly.
+      ${mainBody}
     </p>
 
     <!-- WhatsApp CTA -->
-    ${emailButton('💬 Chat With Us on WhatsApp', 'https://wa.me/923329555786?text=Hi%2C%20I%20submitted%20quote%20' + encodeURIComponent(quote.reference_number) + '%20and%20wanted%20to%20follow%20up.')}
+    ${emailButton(ctaText, 'https://wa.me/923329555786?text=Hi%2C%20I%20submitted%20quote%20' + encodeURIComponent(quote.reference_number) + '%20and%20wanted%20to%20follow%20up.')}
 
-    <p style="margin:24px 0 0;font-size:13px;color:#a1a1aa;text-align:center;">
-      Or reply directly to this email — we're here to help.
-    </p>
+    ${footerNote ? `<p style="margin:24px 0 0;font-size:13px;color:#a1a1aa;text-align:center;">${footerNote}</p>` : ''}
   `;
 
-  return {
-    subject,
-    html: emailLayout(body, {
-      previewText: `We're reviewing your quote ${quote.reference_number} for ${quote.quantity.toLocaleString()} ${quote.product_type}. You'll hear back within 48 hours.`,
-    }),
-  };
+  const html = await emailLayout(body, {
+    previewText: `We're reviewing your quote ${quote.reference_number} for ${quote.quantity.toLocaleString()} ${quote.product_type}. You'll hear back within 48 hours.`,
+  });
+
+  return { subject, html };
 }

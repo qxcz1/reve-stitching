@@ -40,12 +40,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     let result: { subject: string; html: string };
 
+    // All generators are now async, so we await them
     if (templateId === '24h') {
-      result = generateQuoteUnderReviewEmail(sampleQuote as any);
+      result = await generateQuoteUnderReviewEmail(sampleQuote as any);
     } else if (templateId === '48h') {
-      result = generateAdminReminderEmail(sampleQuote as any);
+      result = await generateAdminReminderEmail(sampleQuote as any);
     } else if (templateId === '7d') {
-      result = generateReengagementEmail(sampleQuote as any);
+      result = await generateReengagementEmail(sampleQuote as any);
     } else {
       return json({ error: 'Invalid template ID' }, 400);
     }

@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { getTemplateSettings } from '../../../lib/email-templates/template-storage';
+import { getTemplateSettings, TEMPLATE_DEFAULTS } from '../../../lib/email-templates/template-storage';
 import { generateQuoteUnderReviewEmail } from '../../../lib/email-templates/quote-under-review';
 import { generateAdminReminderEmail } from '../../../lib/email-templates/admin-reminder';
 import { generateReengagementEmail } from '../../../lib/email-templates/quote-reengagement';
@@ -29,15 +29,15 @@ let previewHtml = '';
 let previewSubject = '';
 
 if (previewId === '24h') {
-  const result = generateQuoteUnderReviewEmail(sampleQuote as any);
+  const result = await generateQuoteUnderReviewEmail(sampleQuote as any);
   previewHtml = result.html;
   previewSubject = result.subject;
 } else if (previewId === '48h') {
-  const result = generateAdminReminderEmail(sampleQuote as any);
+  const result = await generateAdminReminderEmail(sampleQuote as any);
   previewHtml = result.html;
   previewSubject = result.subject;
 } else if (previewId === '7d') {
-  const result = generateReengagementEmail(sampleQuote as any);
+  const result = await generateReengagementEmail(sampleQuote as any);
   previewHtml = result.html;
   previewSubject = result.subject;
 }
@@ -45,27 +45,27 @@ if (previewId === '24h') {
 const templates = [
   {
     id: '24h',
-    name: '24-Hour Buyer Follow-Up',
+    name: TEMPLATE_DEFAULTS['24h'].name,
     description: 'Sent to the buyer 24 hours after quote submission if still unread.',
     trigger: 'Auto: 24h after submission, status = new',
     recipient: 'Buyer',
-    icon: '📧',
+    iconType: 'mail' as const,
   },
   {
     id: '48h',
-    name: '48-Hour Admin Reminder',
+    name: TEMPLATE_DEFAULTS['48h'].name,
     description: 'Sent to the admin team when a quote has no response after 48 hours.',
     trigger: 'Auto: 48h after submission, status = new',
     recipient: 'Admin Team',
-    icon: '⚠️',
+    iconType: 'alert' as const,
   },
   {
     id: '7d',
-    name: '7-Day Re-engagement',
+    name: TEMPLATE_DEFAULTS['7d'].name,
     description: 'Sent to the buyer after 7 days if the quote is still unread.',
     trigger: 'Auto: 7 days after submission, status = new',
     recipient: 'Buyer',
-    icon: '🔄',
+    iconType: 'refresh' as const,
   },
 ];
 ---
@@ -111,7 +111,17 @@ const templates = [
       <div class={`rounded-xl bg-white p-5 shadow ring-1 ${previewId === tpl.id ? 'ring-primary ring-2' : 'ring-zinc-200'}`}>
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-2">
-            <span class="text-xl">{tpl.icon}</span>
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100">
+              {tpl.iconType === 'mail' && (
+                <svg class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              )}
+              {tpl.iconType === 'alert' && (
+                <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              )}
+              {tpl.iconType === 'refresh' && (
+                <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              )}
+            </span>
             <h3 class="text-sm font-bold text-zinc-900">{tpl.name}</h3>
           </div>
           <span class="inline-block rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Active</span>
@@ -119,7 +129,7 @@ const templates = [
         <p class="text-xs text-zinc-500 mb-3">{tpl.description}</p>
         <div class="text-xs text-zinc-400 mb-4">
           <span class="inline-block bg-zinc-100 rounded px-2 py-0.5">{tpl.recipient}</span>
-          <span class="mx-1">•</span>
+          <span class="mx-1">&middot;</span>
           <span>{tpl.trigger.replace('Auto: ', '')}</span>
         </div>
         <div class="flex gap-2">
@@ -133,6 +143,13 @@ const templates = [
           >
             <svg class="h-3.5 w-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             Preview
+          </a>
+          <a
+            href={`/admin/email-templates/${tpl.id}`}
+            class="flex-1 text-center rounded-lg px-3 py-2 text-xs font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition"
+          >
+            <svg class="h-3.5 w-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Edit Content
           </a>
         </div>
       </div>
@@ -191,15 +208,15 @@ const templates = [
       </li>
       <li class="flex items-start gap-2">
         <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span>Click <strong>"Edit Content"</strong> to change subject, body text, and button labels</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
         <span>Click <strong>"Edit Branding"</strong> to change logo, colors, and footer for all emails</span>
       </li>
       <li class="flex items-start gap-2">
         <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        <span>Click <strong>"Send Test Email"</strong> to receive a sample in your inbox</span>
-      </li>
-      <li class="flex items-start gap-2">
-        <svg class="h-4 w-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        <span>Each quote only receives each email type <strong>once</strong> (no duplicates)</span>
+        <span>Use <strong>{`{first_name}`}, {`{reference_number}`}, {`{product_type}`}, {`{quantity}`}</strong> as placeholders in text</span>
       </li>
     </ul>
   </div>
@@ -208,24 +225,24 @@ const templates = [
 
 <script is:inline>
   document.getElementById('send-test-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    const templateId = btn.dataset.template;
+    var btn = this;
+    var templateId = btn.dataset.template;
     
-    const email = prompt('Enter email address to send test to:', 'hamzali.revesystems@gmail.com');
+    var email = prompt('Enter email address to send test to:', 'hamzali.revesystems@gmail.com');
     if (!email) return;
     
     btn.disabled = true;
     btn.innerHTML = 'Sending...';
     
     try {
-      const response = await fetch('/api/admin/send-test-email', {
+      var response = await fetch('/api/admin/send-test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templateId, email }),
+        body: JSON.stringify({ templateId: templateId, email: email }),
         credentials: 'include',
       });
       
-      const result = await response.json();
+      var result = await response.json();
       
       if (result.success) {
         alert('Test email sent to ' + email + '!\n\nCheck your inbox (and spam folder).');

@@ -1,6 +1,13 @@
 // src/lib/email-templates/admin-reminder.ts
 
 import { emailLayout, emailButton, quoteDetailsBox } from './_layout';
+import {
+  getTemplateContent,
+  TEMPLATE_DEFAULTS,
+  replaceVars,
+  buildVars,
+  type TemplateContent,
+} from './template-storage';
 import type { QuoteEmailData } from './quote-under-review';
 
 /**
@@ -9,14 +16,26 @@ import type { QuoteEmailData } from './quote-under-review';
  * Tone: Direct, urgent, action-oriented.
  * Goal: Get admin to open the quote and send a response.
  */
-export function generateAdminReminderEmail(quote: QuoteEmailData): {
-  subject: string;
-  html: string;
-} {
-  const hoursSince = 48; // Approximate — actual value computed in service
-  const adminUrl = `https://revestitching.com/admin/quotes/${quote.reference_number}`;
+export async function generateAdminReminderEmail(
+  quote: QuoteEmailData,
+  contentOverride?: TemplateContent | null
+): Promise<{ subject: string; html: string }> {
+  // Get custom content from DB (or use override for preview)
+  const saved = contentOverride !== undefined ? contentOverride : await getTemplateContent('48h');
+  const defaults = TEMPLATE_DEFAULTS['48h'];
+  const vars = buildVars(quote);
 
-  const subject = `⚠️ PENDING: Quote ${quote.reference_number} — No Response in ${hoursSince}h`;
+  const hoursSince = 48; // Approximate — actual value computed in service
+  const adminUrl = `https://revestitching.com/admin/quote/${quote.reference_number}`;
+
+  // Apply custom or default content
+  const subject = replaceVars(saved?.subject || defaults.subject, vars);
+  const greeting = replaceVars(saved?.greeting || defaults.greeting, vars);
+  const mainBody = replaceVars(saved?.main_body || defaults.main_body, vars);
+  const ctaText = replaceVars(saved?.cta_text || defaults.cta_text, vars);
+
+  // Parse mainBody into list items for the stats box
+  const statsLines = mainBody.split(/[.\n]/).filter(s => s.trim().length > 5);
 
   const body = `
     <!-- Alert Banner -->
@@ -26,14 +45,16 @@ export function generateAdminReminderEmail(quote: QuoteEmailData): {
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td style="vertical-align:middle;padding-right:12px;">
-                <span style="font-size:28px;">⏰</span>
+                <div style="width:32px;height:32px;background-color:#dc2626;border-radius:50%;text-align:center;line-height:32px;">
+                  <span style="color:#ffffff;font-size:18px;font-weight:bold;">!</span>
+                </div>
               </td>
               <td style="vertical-align:middle;">
                 <p style="margin:0;font-size:15px;font-weight:bold;color:#dc2626;">
                   Quote Pending for ${hoursSince}+ Hours
                 </p>
                 <p style="margin:4px 0 0;font-size:13px;color:#991b1b;">
-                  ${quote.contact_person} from ${quote.company_name} is waiting for a response.
+                  ${greeting}
                 </p>
               </td>
             </tr>
@@ -59,43 +80,40 @@ export function generateAdminReminderEmail(quote: QuoteEmailData): {
       <tr>
         <td style="padding:16px 20px;background-color:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
           <p style="margin:0 0 8px;font-size:13px;font-weight:bold;color:#92400e;">
-            📊 Why response time matters:
+            Why response time matters:
           </p>
           <ul style="margin:0;padding:0 0 0 20px;font-size:13px;color:#78350f;line-height:1.8;">
-            <li>Buyers who get responses within 24h are <strong>3x more likely</strong> to convert</li>
-            <li>After 48h, buyer interest drops by <strong>60%</strong></li>
-            <li>Competitors may already be quoting this buyer</li>
+            ${statsLines.map(line => `<li>${line.trim()}</li>`).join('')}
           </ul>
         </td>
       </tr>
     </table>
 
     <!-- CTA -->
-    ${emailButton('📋 Review Quote Now →', adminUrl)}
+    ${emailButton(ctaText, adminUrl)}
 
     <!-- Quick Actions -->
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0 0;">
       <tr>
         <td style="text-align:center;">
           <p style="margin:0 0 8px;font-size:12px;color:#a1a1aa;">Quick actions:</p>
-          <a href="mailto:${quote.email}?subject=Re: Quote ${quote.reference_number} — Reve Stitching&body=Hi ${quote.contact_person.split(' ')[0]},%0A%0AThank you for your quote request (${quote.reference_number}).%0A%0A" style="font-size:13px;color:#166534;text-decoration:none;font-weight:600;">
-            📧 Reply to Buyer
+          <a href="mailto:${quote.email}?subject=Re: Quote ${quote.reference_number} — Reve Stitching&body=Hi ${encodeURIComponent(quote.contact_person.split(' ')[0])},%0A%0AThank you for your quote request (${quote.reference_number}).%0A%0A" style="font-size:13px;color:#166534;text-decoration:none;font-weight:600;">
+            Reply to Buyer
           </a>
           <span style="color:#d4d4d8;margin:0 8px;">|</span>
-          <a href="https://wa.me/${quote.email.includes('+') ? '' : '923329555786'}?text=Reminder: Quote ${encodeURIComponent(quote.reference_number)} from ${encodeURIComponent(quote.company_name)} needs a response." style="font-size:13px;color:#166534;text-decoration:none;font-weight:600;">
-            💬 WhatsApp Team
+          <a href="https://wa.me/923329555786?text=Reminder: Quote ${encodeURIComponent(quote.reference_number)} from ${encodeURIComponent(quote.company_name)} needs a response." style="font-size:13px;color:#166534;text-decoration:none;font-weight:600;">
+            WhatsApp Team
           </a>
         </td>
       </tr>
     </table>
   `;
 
-  return {
-    subject,
-    html: emailLayout(body, {
-      previewText: `⚠️ Quote ${quote.reference_number} from ${quote.company_name} has been pending for ${hoursSince}+ hours. ${quote.quantity.toLocaleString()} ${quote.product_type} — needs your attention.`,
-    }),
-  };
+  const html = await emailLayout(body, {
+    previewText: `Quote ${quote.reference_number} from ${quote.company_name} has been pending for ${hoursSince}+ hours. ${quote.quantity.toLocaleString()} ${quote.product_type} — needs your attention.`,
+  });
+
+  return { subject, html };
 }
 
 /**
@@ -104,10 +122,10 @@ export function generateAdminReminderEmail(quote: QuoteEmailData): {
  */
 export function buildAdminReminderDiscordPayload(quote: QuoteEmailData): object {
   return {
-    content: '⚠️ <@&SALES_ROLE_ID> — Quote pending for 48+ hours!',
+    content: 'Quote pending for 48+ hours — needs attention!',
     embeds: [
       {
-        title: `⏰ PENDING: ${quote.reference_number}`,
+        title: `PENDING: ${quote.reference_number}`,
         description: `**${quote.contact_person}** from **${quote.company_name}** submitted a quote **48+ hours ago** and hasn't received a response.`,
         color: 0xdc2626, // Red
         fields: [
@@ -136,7 +154,7 @@ export function buildAdminReminderDiscordPayload(quote: QuoteEmailData): object 
               ]
             : []),
         ],
-        url: `https://revestitching.com/admin/quotes/${quote.reference_number}`,
+        url: `https://revestitching.com/admin/quote/${quote.reference_number}`,
         timestamp: new Date().toISOString(),
         footer: {
           text: 'Reve Stitching — Automated Follow-Up System',

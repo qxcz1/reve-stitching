@@ -1,0 +1,265 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import {
+  getTemplateContent,
+  saveTemplateContent,
+  deleteTemplateContent,
+  TEMPLATE_DEFAULTS,
+  replaceVars,
+  buildVars,
+  type TemplateContent,
+} from '../../../lib/email-templates/template-storage';
+import { generateQuoteUnderReviewEmail } from '../../../lib/email-templates/quote-under-review';
+import { generateAdminReminderEmail } from '../../../lib/email-templates/admin-reminder';
+import { generateReengagementEmail } from '../../../lib/email-templates/quote-reengagement';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const validIds = ['24h', '48h', '7d'];
+
+if (!id || !validIds.includes(id)) {
+  return Astro.redirect('/admin/email-templates');
+}
+
+const defaults = TEMPLATE_DEFAULTS[id];
+let saved = await getTemplateContent(id);
+let flash = '';
+
+// Sample quote for preview
+const sampleQuote = {
+  reference_number: 'RQ-20260308-DEMO',
+  company_name: 'Example Fashion Ltd',
+  contact_person: 'John Smith',
+  email: 'john@example.com',
+  product_type: 'hoodies',
+  quantity: 2500,
+  estimated_price_range: '$12,000 - $18,500',
+  created_at: new Date().toISOString(),
+};
+
+// Handle POST requests
+let formValues: Omit<TemplateContent, 'template_id' | 'updated_at'> | null = null;
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const action = formData.get('_action') as string;
+
+  formValues = {
+    subject: (formData.get('subject') as string) || '',
+    greeting: (formData.get('greeting') as string) || '',
+    main_body: (formData.get('main_body') as string) || '',
+    cta_text: (formData.get('cta_text') as string) || '',
+    footer_note: (formData.get('footer_note') as string) || '',
+  };
+
+  if (action === 'save') {
+    const result = await saveTemplateContent(id, formValues);
+    if (result.success) {
+      flash = 'Content saved successfully! Future emails will use your custom text.';
+      saved = { template_id: id, ...formValues };
+    } else {
+      flash = `Error: ${result.error}`;
+    }
+  } else if (action === 'reset') {
+    await deleteTemplateContent(id);
+    saved = null;
+    formValues = null;
+    flash = 'Template reset to defaults.';
+  }
+}
+
+// Current values: form submission > saved from DB > defaults
+const current = {
+  subject: formValues?.subject ?? saved?.subject ?? defaults.subject,
+  greeting: formValues?.greeting ?? saved?.greeting ?? defaults.greeting,
+  main_body: formValues?.main_body ?? saved?.main_body ?? defaults.main_body,
+  cta_text: formValues?.cta_text ?? saved?.cta_text ?? defaults.cta_text,
+  footer_note: formValues?.footer_note ?? saved?.footer_note ?? defaults.footer_note,
+};
+
+// Build preview with current values
+const contentForPreview: TemplateContent = {
+  template_id: id,
+  ...current,
+};
+
+// Generate preview
+type GeneratorFn = (quote: any, content?: TemplateContent | null) => Promise<{ subject: string; html: string }>;
+const generators: Record<string, GeneratorFn> = {
+  '24h': generateQuoteUnderReviewEmail,
+  '48h': generateAdminReminderEmail,
+  '7d': generateReengagementEmail,
+};
+
+const previewResult = await generators[id](sampleQuote as any, contentForPreview);
+const previewHtml = previewResult.html;
+const previewSubject = previewResult.subject;
+
+const vars = buildVars(sampleQuote);
+const isCustomized = !!saved;
+
+const variableHints = [
+  { var: '{first_name}', example: vars.first_name },
+  { var: '{full_name}', example: vars.full_name },
+  { var: '{company_name}', example: vars.company_name },
+  { var: '{reference_number}', example: vars.reference_number },
+  { var: '{product_type}', example: vars.product_type },
+  { var: '{quantity}', example: vars.quantity },
+  { var: '{estimated_price}', example: vars.estimated_price },
+];
+---
+
+<AdminLayout title={`Edit: ${defaults.name}`}>
+
+  {flash && (
+    <div class:list={[
+      "mb-6 rounded-lg p-3 text-sm font-medium",
+      flash.startsWith('Error') ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"
+    ]} role="alert">
+      {flash}
+    </div>
+  )}
+
+  <div class="mb-6">
+    <div class="flex items-center gap-3 mb-2">
+      <a href="/admin/email-templates" class="p-2 rounded-lg hover:bg-zinc-100 transition-colors">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div>
+        <h1 class="text-2xl font-bold text-zinc-900">Edit: {defaults.name}</h1>
+        <p class="text-sm text-zinc-500 mt-1">
+          {isCustomized
+            ? 'Using custom content. Reset to restore defaults.'
+            : 'Using default content. Edit to customize.'}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+
+    <!-- Editor -->
+    <div class="space-y-6">
+      <form method="POST" class="space-y-6">
+        <input type="hidden" name="_action" value="save" />
+
+        <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+          <h3 class="text-sm font-bold text-zinc-900 mb-4">Email Content</h3>
+          <div class="space-y-4">
+            <div>
+              <label for="subject" class="block text-xs font-medium text-zinc-600 mb-1">Subject Line</label>
+              <input
+                id="subject"
+                name="subject"
+                type="text"
+                value={current.subject}
+                class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label for="greeting" class="block text-xs font-medium text-zinc-600 mb-1">Greeting / Opening</label>
+              <textarea
+                id="greeting"
+                name="greeting"
+                rows="3"
+                class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >{current.greeting}</textarea>
+              <p class="text-[10px] text-zinc-400 mt-1">Shown after "Hi {`{first_name}`},"</p>
+            </div>
+            <div>
+              <label for="main_body" class="block text-xs font-medium text-zinc-600 mb-1">Main Body Text</label>
+              <textarea
+                id="main_body"
+                name="main_body"
+                rows="3"
+                class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >{current.main_body}</textarea>
+            </div>
+            <div>
+              <label for="cta_text" class="block text-xs font-medium text-zinc-600 mb-1">Button Text</label>
+              <input
+                id="cta_text"
+                name="cta_text"
+                type="text"
+                value={current.cta_text}
+                class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label for="footer_note" class="block text-xs font-medium text-zinc-600 mb-1">Footer Note</label>
+              <input
+                id="footer_note"
+                name="footer_note"
+                type="text"
+                value={current.footer_note}
+                class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <p class="text-[10px] text-zinc-400 mt-1">Small text below the button. Leave empty to hide.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Variable Reference -->
+        <div class="rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200">
+          <h4 class="text-xs font-bold text-zinc-700 mb-3">Available Variables</h4>
+          <div class="grid grid-cols-2 gap-2">
+            {variableHints.map(v => (
+              <div class="text-xs">
+                <code class="bg-white px-1.5 py-0.5 rounded text-primary font-mono">{v.var}</code>
+                <span class="text-zinc-400 ml-1">{v.example}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex gap-3">
+          <button
+            type="submit"
+            class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-primary-light transition flex items-center justify-center gap-2"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Save Content
+          </button>
+        </div>
+      </form>
+
+      <!-- Reset Button (only show if customized) -->
+      {isCustomized && (
+        <form method="POST">
+          <input type="hidden" name="_action" value="reset" />
+          <button
+            type="submit"
+            onclick="return confirm('Reset this template to defaults? Your custom content will be lost.')"
+            class="w-full rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+          >
+            Reset to Defaults
+          </button>
+        </form>
+      )}
+    </div>
+
+    <!-- Live Preview -->
+    <div>
+      <div class="sticky top-24">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-zinc-900">Preview</h3>
+          <span class="text-[10px] text-zinc-400">Subject: {previewSubject}</span>
+        </div>
+        <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200 overflow-hidden">
+          <iframe
+            srcdoc={previewHtml}
+            class="w-full border-0"
+            style="height: 650px;"
+            title="Email Preview"
+          ></iframe>
+        </div>
+        <p class="text-[10px] text-zinc-400 mt-2 text-center">
+          Save to update the preview. Actual rendering may vary across email clients.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</AdminLayout>
