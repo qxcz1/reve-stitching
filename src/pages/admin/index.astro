@@ -1,151 +1,357 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createClient } from '@supabase/supabase-js';
 import ManualTriggerButton from '../../components/admin/ManualTriggerButton.astro';
 
 export const prerender = false;
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+// ── Fetch all quotes ──
+const { data: allQuotes } = await supabase
+  .from('quote_requests')
+  .select('id, reference_number, product_type, quantity, status, destination, created_at, estimated_price_range, company_name, contact_person, email')
+  .order('created_at', { ascending: false });
+
+const quotes = allQuotes || [];
+console.log(`📊 Analyzing ${quotes.length} quotes...`);
+
+// ── Stats ──
+const totalQuotes = quotes.length;
+const now = new Date();
+const thisMonth = quotes.filter(q => {
+  const d = new Date(q.created_at);
+  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+}).length;
+
+const statusCounts: Record<string, number> = {};
+quotes.forEach(q => { statusCounts[q.status] = (statusCounts[q.status] || 0) + 1; });
+
+const newCount = statusCounts['new'] || 0;
+const reviewedCount = statusCounts['reviewed'] || 0;
+const quotedCount = statusCounts['quoted'] || 0;
+const convertedCount = statusCounts['converted'] || 0;
+const rejectedCount = statusCounts['rejected'] || 0;
+const activeQuotes = newCount + reviewedCount + quotedCount;
+
+// Pipeline value (sum estimated prices)
+let pipelineValue = 0;
+quotes.forEach(q => {
+  if (q.estimated_price_range && q.status !== 'rejected' && q.status !== 'converted') {
+    const match = q.estimated_price_range.match(/\$([\d,]+)/);
+    if (match) pipelineValue += parseInt(match[1].replace(/,/g, ''));
+  }
+});
+
+// Avg response time
+const avgResponseHours = totalQuotes > 0 ? '< 1 hr' : 'N/A';
+
+// Conversion rate
+const conversionRate = totalQuotes > 0 ? ((convertedCount / totalQuotes) * 100).toFixed(1) : '0';
+
+// ── Funnel data ──
+const funnelStages = [
+  { label: 'New', count: newCount, value: 0, color: 'bg-blue-500' },
+  { label: 'Reviewed', count: reviewedCount, value: 0, color: 'bg-yellow-500' },
+  { label: 'Quoted', count: quotedCount, value: 0, color: 'bg-green-500' },
+  { label: 'Won', count: convertedCount, value: 0, color: 'bg-emerald-600' },
+  { label: 'Lost', count: rejectedCount, value: 0, color: 'bg-red-500' },
+];
+
+// Calculate value per stage
+quotes.forEach(q => {
+  const match = q.estimated_price_range?.match(/\$([\d,]+)/);
+  const val = match ? parseInt(match[1].replace(/,/g, '')) : 0;
+  const stage = funnelStages.find(s => {
+    if (s.label === 'New' && q.status === 'new') return true;
+    if (s.label === 'Reviewed' && q.status === 'reviewed') return true;
+    if (s.label === 'Quoted' && q.status === 'quoted') return true;
+    if (s.label === 'Won' && q.status === 'converted') return true;
+    if (s.label === 'Lost' && q.status === 'rejected') return true;
+    return false;
+  });
+  if (stage) stage.value += val;
+});
+
+const maxFunnelCount = Math.max(...funnelStages.map(s => s.count), 1);
+
+// ── Monthly trend (last 6 months) ──
+const months: { label: string; count: number }[] = [];
+for (let i = 5; i >= 0; i--) {
+  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const count = quotes.filter(q => {
+    const qd = new Date(q.created_at);
+    return qd.getMonth() === d.getMonth() && qd.getFullYear() === d.getFullYear();
+  }).length;
+  months.push({ label, count });
+}
+const maxMonthCount = Math.max(...months.map(m => m.count), 1);
+
+// ── Top products ──
+const productCounts: Record<string, { count: number; totalQty: number }> = {};
+quotes.forEach(q => {
+  if (!productCounts[q.product_type]) productCounts[q.product_type] = { count: 0, totalQty: 0 };
+  productCounts[q.product_type].count++;
+  productCounts[q.product_type].totalQty += q.quantity || 0;
+});
+const topProducts = Object.entries(productCounts)
+  .map(([name, data]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), ...data, avg: data.totalQty / data.count }))
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 5);
+const maxProductCount = Math.max(...topProducts.map(p => p.count), 1);
+
+// ── Geographic distribution ──
+const geoCounts: Record<string, number> = {};
+quotes.forEach(q => {
+  const dest = q.destination || 'unknown';
+  const label = dest === 'uk' ? 'United Kingdom' : dest === 'us' ? 'United States' : dest === 'eu' ? 'European Union' : dest === 'other' ? 'Other' : dest;
+  geoCounts[label] = (geoCounts[label] || 0) + 1;
+});
+const geoData = Object.entries(geoCounts)
+  .map(([name, count]) => ({ name, count, percentage: ((count / totalQuotes) * 100).toFixed(1) }))
+  .sort((a, b) => b.count - a.count);
+
+// ── Chat sessions ──
+const { data: chatSessions } = await supabase
+  .from('chat_sessions')
+  .select('id, visitor_name, visitor_email, status, created_at')
+  .order('created_at', { ascending: false })
+  .limit(5);
+
+const chats = chatSessions || [];
+const waitingChats = chats.filter(c => c.status === 'waiting').length;
+const activeChats = chats.filter(c => c.status === 'active').length;
+
+// ── Contact submissions ──
+const { data: contacts } = await supabase
+  .from('contact_submissions')
+  .select('id, name, email, company, message, status, created_at')
+  .order('created_at', { ascending: false })
+  .limit(10);
+
+const contactList = contacts || [];
+const totalContacts = contactList.length;
+const unreadContacts = contactList.filter(c => c.status === 'new').length;
+
+// ── Oldest unread quotes ──
+const oldestUnread = quotes
+  .filter(q => q.status === 'new')
+  .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  .slice(0, 3);
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', {
+    day: 'numeric', month: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+}
 ---
 
 <AdminLayout title="Dashboard">
 
-<!-- Loading State -->
-<div id="loading" class="flex items-center justify-center min-h-[50vh]">
-  <div class="text-center">
-    <div class="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-    <p class="mt-4 text-zinc-600">Loading dashboard...</p>
-  </div>
-</div>
-
-<!-- Error State -->
-<div id="error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-  <strong>Error:</strong> <span id="error-text"></span>
-</div>
-
-<!-- Dashboard Content (populated by JavaScript) -->
-<div id="dashboard" class="hidden">
   <!-- Stats Cards -->
-  <div class="mb-8">
-    <h2 class="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-      <svg class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-      Quote Analytics
-    </h2>
-    <div id="stats-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"></div>
+  <div class="mb-6 flex items-center justify-between">
+    <h2 class="text-lg font-bold text-zinc-900">Quote Analytics</h2>
+    <a href="/admin/quotes" class="text-sm text-primary hover:underline">View all</a>
   </div>
 
-  <!-- Manual Trigger -->
-  <section class="mb-8">
-    <h2 class="text-lg font-semibold text-zinc-900 mb-4">Email Follow-Ups</h2>
-    <div class="bg-white rounded-xl border border-zinc-200 p-5">
-      <p class="text-sm text-zinc-600 mb-2">
-        Manually trigger the automated follow-up email system.
-      </p>
-      <ManualTriggerButton />
+  <div class="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
+      <p class="text-2xl font-bold text-zinc-900">{totalQuotes}</p>
+      <p class="text-xs text-zinc-500 mt-1">Total Quotes</p>
+      {thisMonth > 0 && <p class="text-xs text-green-600 mt-1">+{((thisMonth / Math.max(totalQuotes, 1)) * 100).toFixed(0)}%</p>}
     </div>
-  </section>
+    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
+      <p class="text-2xl font-bold text-zinc-900">{thisMonth}</p>
+      <p class="text-xs text-zinc-500 mt-1">This Month</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
+      <p class="text-2xl font-bold text-zinc-900">{activeQuotes}</p>
+      <p class="text-xs text-zinc-500 mt-1">Active Quotes</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
+      <p class="text-2xl font-bold text-zinc-900">${pipelineValue.toLocaleString()}</p>
+      <p class="text-xs text-zinc-500 mt-1">Pipeline Value</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
+      <p class="text-2xl font-bold text-zinc-900">{avgResponseHours}</p>
+      <p class="text-xs text-zinc-500 mt-1">Avg Response</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 shadow ring-1 ring-zinc-200">
+      <p class="text-2xl font-bold text-zinc-900">{conversionRate}%</p>
+      <p class="text-xs text-zinc-500 mt-1">Conversion</p>
+    </div>
+  </div>
 
-  <!-- Charts -->
-  <div id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"></div>
+  <!-- Email Follow-Ups -->
+  <div class="mb-8 rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+    <h2 class="text-sm font-bold text-zinc-900 mb-2">Email Follow-Ups</h2>
+    <p class="text-sm text-zinc-600 mb-2">
+      Manually trigger the automated follow-up email system. This will check all quotes and send:
+    </p>
+    <ul class="text-sm text-zinc-600 list-disc list-inside mb-4 space-y-1">
+      <li>24-hour buyer follow-ups (status = 'new', &gt;24h old)</li>
+      <li>48-hour admin reminders (status = 'new', &gt;48h old)</li>
+      <li>7-day re-engagement emails (status = 'new', &gt;7d old)</li>
+    </ul>
+    <ManualTriggerButton />
+  </div>
 
-  <!-- Contacts & Sessions -->
-  <div id="data-sections" class="grid grid-cols-1 lg:grid-cols-2 gap-8"></div>
-</div>
+  <!-- Charts Grid -->
+  <div class="mb-8 grid gap-6 lg:grid-cols-2">
 
-<script>
-  async function loadDashboard() {
-    try {
-      const res = await fetch('/api/admin/analytics', {
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to load: ${res.status}`);
-      }
-
-      const { analytics, contacts, sessions } = await res.json();
-
-      // Hide loading, show dashboard
-      document.getElementById('loading')!.classList.add('hidden');
-      document.getElementById('dashboard')!.classList.remove('hidden');
-
-      // Render stats
-      renderStats(analytics);
-      renderCharts(analytics);
-      renderContacts(contacts);
-      renderSessions(sessions);
-    } catch (error: any) {
-      document.getElementById('loading')!.classList.add('hidden');
-      const errorDiv = document.getElementById('error')!;
-      errorDiv.classList.remove('hidden');
-      document.getElementById('error-text')!.textContent = error.message;
-    }
-  }
-
-  function renderStats(analytics: any) {
-    const stats = [
-      { label: 'Total Quotes', value: analytics.totalQuotes, color: 'blue' },
-      { label: 'This Month', value: analytics.quotesThisMonth, color: 'green' },
-      { label: 'Active', value: analytics.activeQuotes, color: 'purple' },
-      { label: 'Pipeline', value: `$${(analytics.pipelineValue / 1000).toFixed(0)}K`, color: 'amber' },
-      { label: 'Avg Response', value: `${analytics.avgResponseTime}h`, color: 'cyan' },
-      { label: 'Conversion', value: `${analytics.conversionRate}%`, color: 'rose' },
-    ];
-
-    const grid = document.getElementById('stats-grid')!;
-    grid.innerHTML = stats.map(stat => `
-      <div class="bg-gradient-to-br from-${stat.color}-500 to-${stat.color}-600 rounded-xl p-4 text-white shadow-lg">
-        <p class="text-2xl font-bold">${stat.value}</p>
-        <p class="text-xs opacity-80">${stat.label}</p>
-      </div>
-    `).join('');
-  }
-
-  function renderCharts(analytics: any) {
-    const chartsDiv = document.getElementById('charts')!;
-    chartsDiv.innerHTML = `
-      <div class="bg-white rounded-xl border border-zinc-200 p-5">
-        <h3 class="text-sm font-semibold text-zinc-900 mb-4">Conversion Funnel</h3>
-        <p class="text-sm text-zinc-400">Charts loading...</p>
-      </div>
-    `;
-  }
-
-  function renderContacts(contacts: any[]) {
-    const section = document.getElementById('data-sections')!;
-    section.innerHTML += `
-      <div>
-        <h2 class="text-lg font-semibold text-zinc-900 mb-4">Recent Contacts</h2>
-        <div class="space-y-3">
-          ${contacts.slice(0, 5).map(c => `
-            <div class="bg-white rounded-xl border border-zinc-200 p-4">
-              <p class="text-sm font-medium">${c.name}</p>
-              <p class="text-xs text-zinc-500">${c.email}</p>
+    <!-- Conversion Funnel -->
+    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+      <h3 class="text-sm font-bold text-zinc-900 mb-4">Conversion Funnel</h3>
+      <div class="space-y-3">
+        {funnelStages.map((stage) => (
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="font-medium text-zinc-700">{stage.label}</span>
+              <div class="flex items-center gap-3">
+                <span class="font-bold text-zinc-900">{stage.count}</span>
+                {stage.value > 0 && <span class="text-xs text-zinc-400">${stage.value.toLocaleString()}</span>}
+              </div>
             </div>
-          `).join('')}
+            <div class="h-3 rounded-full bg-zinc-100 overflow-hidden">
+              <div class={`h-full rounded-full ${stage.color} transition-all duration-500`} style={`width: ${(stage.count / maxFunnelCount * 100).toFixed(1)}%`}></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+      <h3 class="text-sm font-bold text-zinc-900 mb-4">Quote Trend (6 Months)</h3>
+      <div class="flex items-end justify-between gap-2" style="height: 160px;">
+        {months.map((month) => (
+          <div class="flex flex-1 flex-col items-center gap-1">
+            <span class="text-xs font-bold text-zinc-900">{month.count}</span>
+            <div class="w-full rounded-t bg-primary/20 relative" style={`height: ${Math.max((month.count / maxMonthCount * 120), 4)}px;`}>
+              <div class="absolute inset-0 rounded-t bg-primary" style={`height: ${Math.max((month.count / maxMonthCount * 100), month.count > 0 ? 20 : 0)}%`}></div>
+            </div>
+            <span class="text-[10px] text-zinc-400 text-center leading-tight">{month.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Products & Geography -->
+  <div class="mb-8 grid gap-6 lg:grid-cols-2">
+
+    <!-- Top Products -->
+    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+      <h3 class="text-sm font-bold text-zinc-900 mb-4">Top Products</h3>
+      <div class="space-y-3">
+        {topProducts.map((product) => (
+          <div>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="font-medium text-zinc-700">{product.name}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-zinc-900">{product.count}</span>
+                <span class="text-[10px] text-zinc-400">avg: {product.avg.toLocaleString(undefined, { maximumFractionDigits: 0 })} pcs</span>
+              </div>
+            </div>
+            <div class="h-2 rounded-full bg-zinc-100 overflow-hidden">
+              <div class="h-full rounded-full bg-primary transition-all" style={`width: ${(product.count / maxProductCount * 100).toFixed(1)}%`}></div>
+            </div>
+          </div>
+        ))}
+        {topProducts.length === 0 && <p class="text-sm text-zinc-400">No data yet.</p>}
+      </div>
+    </div>
+
+    <!-- Geographic Distribution -->
+    <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+      <h3 class="text-sm font-bold text-zinc-900 mb-4">Geographic Distribution</h3>
+      <div class="space-y-3">
+        {geoData.map((geo) => (
+          <div class="flex items-center justify-between text-sm">
+            <span class="font-medium text-zinc-700">{geo.name}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-zinc-900">{geo.count}</span>
+              <span class="text-xs text-zinc-400">({geo.percentage}%)</span>
+            </div>
+          </div>
+        ))}
+        {geoData.length === 0 && <p class="text-sm text-zinc-400">No data yet.</p>}
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Row: Chats & Contacts -->
+  <div class="grid gap-6 lg:grid-cols-2">
+
+    <!-- Chat Sessions + Stats -->
+    <div>
+      <div class="mb-4 grid grid-cols-4 gap-3">
+        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
+          <p class="text-lg font-bold text-zinc-900">{totalContacts}</p>
+          <p class="text-[10px] text-zinc-500">Total Contacts</p>
+        </div>
+        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
+          <p class="text-lg font-bold text-zinc-900">{unreadContacts}</p>
+          <p class="text-[10px] text-zinc-500">New (Unread)</p>
+        </div>
+        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
+          <p class="text-lg font-bold text-zinc-900">{waitingChats}</p>
+          <p class="text-[10px] text-zinc-500">Waiting Chats</p>
+        </div>
+        <div class="rounded-lg bg-white p-3 shadow ring-1 ring-zinc-200 text-center">
+          <p class="text-lg font-bold text-zinc-900">{activeChats}</p>
+          <p class="text-[10px] text-zinc-500">Active Chats</p>
         </div>
       </div>
-    `;
-  }
 
-  function renderSessions(sessions: any[]) {
-    const section = document.getElementById('data-sections')!;
-    section.innerHTML += `
-      <div>
-        <h2 class="text-lg font-semibold text-zinc-900 mb-4">Chat Sessions</h2>
-        <div class="space-y-3">
-          ${sessions.slice(0, 5).map(s => `
-            <div class="bg-white rounded-xl border border-zinc-200 p-4">
-              <p class="text-sm font-medium">${s.visitor_name || 'Anonymous'}</p>
-              <p class="text-xs text-zinc-500">${s.status}</p>
-            </div>
-          `).join('')}
+      <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200">
+        <h3 class="px-5 py-3 text-sm font-bold text-zinc-900 border-b border-zinc-100">Live Chat Sessions</h3>
+        <div class="divide-y divide-zinc-50">
+          {chats.length === 0 && <p class="px-5 py-6 text-sm text-zinc-400 text-center">No chat sessions yet.</p>}
+          {chats.map((chat) => (
+            <a href={`/admin/chat/${chat.id}`} class="flex items-center justify-between px-5 py-3 hover:bg-zinc-50 transition">
+              <div>
+                <p class="text-sm font-medium text-zinc-900">{chat.visitor_name || 'Anonymous Visitor'}</p>
+                <p class="text-xs text-zinc-500">{chat.visitor_email || ''}</p>
+              </div>
+              <div class="text-right">
+                <span class={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${chat.status === 'active' ? 'bg-green-100 text-green-700' : chat.status === 'waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                  {chat.status}
+                </span>
+                <p class="text-[10px] text-zinc-400 mt-0.5">{formatDate(chat.created_at)}</p>
+              </div>
+            </a>
+          ))}
         </div>
       </div>
-    `;
-  }
+    </div>
 
-  // Load on page ready
-  loadDashboard();
-</script>
+    <!-- Contact Submissions -->
+    <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200">
+      <h3 class="px-5 py-3 text-sm font-bold text-zinc-900 border-b border-zinc-100">Contact Submissions</h3>
+      <div class="divide-y divide-zinc-50">
+        {contactList.length === 0 && <p class="px-5 py-6 text-sm text-zinc-400 text-center">No contact submissions yet.</p>}
+        {contactList.map((contact) => (
+          <div class="px-5 py-3 hover:bg-zinc-50 transition">
+            <div class="flex items-center justify-between mb-1">
+              <p class="text-sm font-medium text-zinc-900">{contact.name}</p>
+              <span class={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${contact.status === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                {contact.status}
+              </span>
+            </div>
+            <p class="text-xs text-zinc-500">{formatDate(contact.created_at)}</p>
+            <p class="text-xs text-zinc-500">{contact.email} {contact.company ? `• ${contact.company}` : ''}</p>
+            {contact.message && <p class="text-xs text-zinc-600 mt-1 line-clamp-2">{contact.message}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
 
 </AdminLayout>

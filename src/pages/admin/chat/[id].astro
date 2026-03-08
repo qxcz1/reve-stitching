@@ -6,91 +6,70 @@ export const prerender = false;
 
 const { id } = Astro.params;
 
-// Create Supabase client with service role
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-// Fetch session
 const { data: session } = await supabase
   .from('chat_sessions')
   .select('*')
   .eq('id', id)
   .single();
 
-if (!session) {
-  return Astro.redirect('/admin');
-}
+if (!session) return Astro.redirect('/admin');
 
-// Fetch messages
 const { data: messages } = await supabase
   .from('chat_messages')
   .select('*')
   .eq('session_id', id)
   .order('created_at', { ascending: true });
 
-// If session is waiting, mark as active
 if (session.status === 'waiting') {
-  await supabase
-    .from('chat_sessions')
-    .update({ status: 'active' })
-    .eq('id', id);
+  await supabase.from('chat_sessions').update({ status: 'active' }).eq('id', id);
   session.status = 'active';
 }
 
-// Pre-compute for client script
 const ssrMessageIds = (messages || []).map((m: any) => m.id);
 const lastMsgTime = messages && messages.length > 0
   ? messages[messages.length - 1].created_at
   : new Date().toISOString();
 
-// Supabase config for client-side
 const supabaseUrl = process.env.SUPABASE_URL || import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 ---
 
 <AdminLayout title={`Chat — ${session.visitor_name || 'Visitor'}`}>
 
-  <!-- Chat Header -->
   <div class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-4">
       <a href="/admin" class="p-2 rounded-lg hover:bg-zinc-100 transition-colors">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
       <div>
-        <h1 class="text-lg font-semibold text-zinc-900">
-          {session.visitor_name || 'Anonymous Visitor'}
-        </h1>
+        <h1 class="text-lg font-semibold text-zinc-900">{session.visitor_name || 'Anonymous Visitor'}</h1>
         <p class="text-sm text-zinc-500">
           {session.visitor_email || 'No email provided'} •
-          <span id="session-status" class={`font-medium ${session.status === 'active' ? 'text-green-600' : 'text-zinc-400'}`}>
-            {session.status}
-          </span>
+          <span id="session-status" class={`font-medium ${session.status === 'active' ? 'text-green-600' : 'text-zinc-400'}`}>{session.status}</span>
         </p>
       </div>
     </div>
     {session.status !== 'closed' && (
-      <button
-        id="close-session-btn"
-        class="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-      >
+      <button id="close-session-btn" class="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
         Close Chat
       </button>
     )}
   </div>
 
-  <!-- Chat Messages -->
   <div class="bg-white rounded-2xl border border-zinc-200 overflow-hidden flex flex-col" style="height: calc(100vh - 260px);">
-
     <div id="admin-messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
       {(!messages || messages.length === 0) && (
         <p id="no-messages-placeholder" class="text-center text-zinc-400 text-sm py-8">No messages yet.</p>
       )}
-      {messages?.map((msg) => (
+      {messages?.map((msg: any) => (
         <div class={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-          <div class={`max-w-[70%] ${msg.sender === 'admin' ? 'order-2' : ''}`}>
+          <div class={`max-w-[70%]`}>
             <div class={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
               msg.sender === 'admin'
                 ? 'bg-primary text-white rounded-tr-md'
@@ -107,24 +86,13 @@ const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.
       ))}
     </div>
 
-    <!-- Admin Input -->
     {session.status !== 'closed' ? (
       <div class="px-6 py-4 border-t border-zinc-100">
         <form id="admin-chat-form" class="flex items-center gap-3">
-          <textarea
-            id="admin-chat-input"
-            placeholder="Type your reply..."
-            autocomplete="off"
-            rows="1"
+          <textarea id="admin-chat-input" placeholder="Type your reply..." autocomplete="off" rows="1"
             class="flex-1 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none overflow-hidden"
-            style="max-height: 120px;"
-          ></textarea>
-          <button
-            type="submit"
-            class="px-6 py-3 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary-light transition-colors shrink-0"
-          >
-            Send
-          </button>
+            style="max-height: 120px;"></textarea>
+          <button type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary-light transition-colors shrink-0">Send</button>
         </form>
       </div>
     ) : (
@@ -136,66 +104,39 @@ const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.
 
 </AdminLayout>
 
-<script is:inline define:vars={{
-  sessionId: id,
-  supabaseUrl,
-  supabaseKey: supabaseAnonKey,
-  sessionStatus: session.status,
-  ssrMessageIds,
-  lastMsgTime,
-}}>
+<script is:inline define:vars={{ sessionId: id, supabaseUrl, supabaseKey: supabaseAnonKey, sessionStatus: session.status, ssrMessageIds, lastMsgTime }}>
   (async () => {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm');
+    var mod = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm');
+    var supabase = mod.createClient(supabaseUrl, supabaseKey);
+    var messagesDiv = document.getElementById('admin-messages');
+    var form = document.getElementById('admin-chat-form');
+    var input = document.getElementById('admin-chat-input');
+    var closeBtn = document.getElementById('close-session-btn');
+    var renderedIds = new Set(ssrMessageIds);
+    var lastCheck = lastMsgTime;
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const messagesDiv = document.getElementById('admin-messages');
-    const form = document.getElementById('admin-chat-form');
-    const input = document.getElementById('admin-chat-input');
-    const closeBtn = document.getElementById('close-session-btn');
-
-    const renderedIds = new Set(ssrMessageIds);
-    let lastCheck = lastMsgTime;
-
-    function scrollToBottom() {
-      if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
+    function scrollToBottom() { if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight; }
     scrollToBottom();
 
     function appendMessage(text, sender, timestamp) {
       if (!messagesDiv) return;
       var ph = document.getElementById('no-messages-placeholder');
       if (ph) ph.remove();
-
       var div = document.createElement('div');
       div.className = 'flex ' + (sender === 'admin' ? 'justify-end' : 'justify-start');
       var time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      div.innerHTML =
-        '<div class="max-w-[70%]">' +
-          '<div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
-            (sender === 'admin' ? 'bg-primary text-white rounded-tr-md' : 'bg-zinc-100 text-zinc-700 rounded-tl-md') +
-          '">' + text.replace(/\n/g, '<br>') + '</div>' +
-          '<span class="text-[10px] text-zinc-400 mt-1 block ' +
-            (sender === 'admin' ? 'text-right pr-1' : 'pl-1') +
-          '">' + (sender === 'admin' ? 'You' : 'Visitor') + ' • ' + time + '</span>' +
-        '</div>';
+      div.innerHTML = '<div class="max-w-[70%]"><div class="rounded-2xl px-4 py-3 text-sm leading-relaxed ' +
+        (sender === 'admin' ? 'bg-primary text-white rounded-tr-md' : 'bg-zinc-100 text-zinc-700 rounded-tl-md') +
+        '">' + text.replace(/\n/g, '<br>') + '</div><span class="text-[10px] text-zinc-400 mt-1 block ' +
+        (sender === 'admin' ? 'text-right pr-1' : 'pl-1') + '">' +
+        (sender === 'admin' ? 'You' : 'Visitor') + ' \u2022 ' + time + '</span></div>';
       messagesDiv.appendChild(div);
       scrollToBottom();
     }
 
     if (form && input) {
-      input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          form.dispatchEvent(new Event('submit'));
-        }
-      });
-
-      input.addEventListener('input', function() {
-        input.style.height = 'auto';
-        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-      });
-
+      input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.dispatchEvent(new Event('submit')); } });
+      input.addEventListener('input', function() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; });
       form.addEventListener('submit', async function(e) {
         e.preventDefault();
         var text = input.value.trim();
@@ -203,60 +144,35 @@ const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.
         input.value = '';
         input.style.height = 'auto';
         input.focus();
-
         appendMessage(text, 'admin', new Date().toISOString());
-
         try {
-          var result = await supabase
-            .from('chat_messages')
-            .insert({ session_id: sessionId, sender: 'admin', message: text })
-            .select('id, created_at')
-            .single();
-
-          if (result.data) {
-            renderedIds.add(result.data.id);
-            if (result.data.created_at > lastCheck) lastCheck = result.data.created_at;
-          }
-        } catch (err) {
-          console.warn('Send failed:', err);
-        }
+          var result = await supabase.from('chat_messages').insert({ session_id: sessionId, sender: 'admin', message: text }).select('id, created_at').single();
+          if (result.data) { renderedIds.add(result.data.id); if (result.data.created_at > lastCheck) lastCheck = result.data.created_at; }
+        } catch (err) { console.warn('Send failed:', err); }
       });
     }
 
     if (sessionStatus !== 'closed') {
       setInterval(async function() {
         try {
-          var result = await supabase
-            .from('chat_messages')
-            .select('id, sender, message, created_at')
-            .eq('session_id', sessionId)
-            .gt('created_at', lastCheck)
-            .order('created_at', { ascending: true });
-
-          var newMsgs = result.data;
-          if (newMsgs && newMsgs.length > 0) {
-            for (var i = 0; i < newMsgs.length; i++) {
-              var msg = newMsgs[i];
+          var result = await supabase.from('chat_messages').select('id, sender, message, created_at').eq('session_id', sessionId).gt('created_at', lastCheck).order('created_at', { ascending: true });
+          if (result.data) {
+            for (var i = 0; i < result.data.length; i++) {
+              var msg = result.data[i];
               lastCheck = msg.created_at;
               if (renderedIds.has(msg.id)) continue;
               renderedIds.add(msg.id);
-
               if (msg.sender === 'visitor') {
                 appendMessage(msg.message, msg.sender, msg.created_at);
                 if (msg.message === '(Visitor left the chat)') {
                   var statusEl = document.getElementById('session-status');
-                  if (statusEl) {
-                    statusEl.textContent = 'closed';
-                    statusEl.className = 'font-medium text-zinc-400';
-                  }
+                  if (statusEl) { statusEl.textContent = 'closed'; statusEl.className = 'font-medium text-zinc-400'; }
                   if (input) input.disabled = true;
                 }
               }
             }
           }
-        } catch (err) {
-          console.warn('Poll error:', err);
-        }
+        } catch (err) { console.warn('Poll error:', err); }
       }, 2000);
     }
 
@@ -264,11 +180,7 @@ const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.
       closeBtn.addEventListener('click', async function() {
         if (!confirm('Close this chat session?')) return;
         await supabase.from('chat_sessions').update({ status: 'closed' }).eq('id', sessionId);
-        await supabase.from('chat_messages').insert({
-          session_id: sessionId,
-          sender: 'admin',
-          message: 'This chat session has been closed. Thank you for contacting us!',
-        });
+        await supabase.from('chat_messages').insert({ session_id: sessionId, sender: 'admin', message: 'This chat session has been closed. Thank you for contacting us!' });
         window.location.reload();
       });
     }

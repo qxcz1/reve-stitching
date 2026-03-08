@@ -1,0 +1,113 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { generateQuoteUnderReviewEmail } from '../../../lib/email-templates/quote-under-review';
+import { generateAdminReminderEmail } from '../../../lib/email-templates/admin-reminder';
+import { generateQuoteReengagementEmail } from '../../../lib/email-templates/quote-reengagement';
+
+export const prerender = false;
+
+const sampleQuote = {
+  reference_number: 'RQ-20260308-DEMO',
+  company_name: 'Example Fashion Ltd',
+  contact_person: 'John Smith',
+  email: 'john@example.com',
+  product_type: 'hoodies',
+  quantity: 2500,
+  estimated_price_range: '$12,000 - $18,500',
+};
+
+const templates = [
+  {
+    id: '24h',
+    name: '24-Hour Buyer Follow-Up',
+    description: 'Sent to the buyer 24 hours after quote submission if still unread.',
+    subject: `Your Quote ${sampleQuote.reference_number} Is Under Review — Reve Stitching`,
+    trigger: 'Auto: 24h after submission, status = new',
+  },
+  {
+    id: '48h',
+    name: '48-Hour Admin Reminder',
+    description: 'Sent to the admin team when a quote has no response after 48 hours.',
+    subject: `⚠️ PENDING: Quote ${sampleQuote.reference_number} — No Response in 48h`,
+    trigger: 'Auto: 48h after submission, status = new',
+  },
+  {
+    id: '7d',
+    name: '7-Day Re-engagement',
+    description: 'Sent to the buyer after 7 days if the quote is still unread.',
+    subject: `Still interested in ${sampleQuote.product_type}? — Quote ${sampleQuote.reference_number}`,
+    trigger: 'Auto: 7 days after submission, status = new',
+  },
+];
+
+const selectedTemplate = Astro.url.searchParams.get('preview') || '';
+let previewHtml = '';
+
+if (selectedTemplate === '24h') {
+  const result = generateQuoteUnderReviewEmail(sampleQuote as any);
+  previewHtml = result.html;
+} else if (selectedTemplate === '48h') {
+  const result = generateAdminReminderEmail(sampleQuote as any);
+  previewHtml = result.html;
+} else if (selectedTemplate === '7d') {
+  const result = generateQuoteReengagementEmail(sampleQuote as any);
+  previewHtml = result.html;
+}
+---
+
+<AdminLayout title="Email Templates">
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-zinc-900">Email Templates</h1>
+    <p class="mt-1 text-sm text-zinc-500">Preview and manage automated email templates.</p>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    {templates.map((tpl) => (
+      <div class={`rounded-xl bg-white p-6 shadow ring-1 ${selectedTemplate === tpl.id ? 'ring-primary ring-2' : 'ring-zinc-200'}`}>
+        <h3 class="text-sm font-bold text-zinc-900 mb-2">{tpl.name}</h3>
+        <p class="text-xs text-zinc-500 mb-3">{tpl.description}</p>
+        <div class="text-xs text-zinc-400 mb-1">
+          <strong>Subject:</strong> {tpl.subject}
+        </div>
+        <div class="text-xs text-zinc-400 mb-4">
+          <strong>Trigger:</strong> {tpl.trigger}
+        </div>
+        <a
+          href={`/admin/email-templates?preview=${tpl.id}`}
+          class={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium transition ${
+            selectedTemplate === tpl.id
+              ? 'bg-primary text-white'
+              : 'border border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+          }`}
+        >
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          Preview
+        </a>
+      </div>
+    ))}
+  </div>
+
+  {previewHtml && (
+    <div class="mt-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-zinc-900">Email Preview</h2>
+        <a href="/admin/email-templates" class="text-sm text-zinc-500 hover:text-zinc-700">Close preview</a>
+      </div>
+      <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200 overflow-hidden">
+        <div class="bg-zinc-100 px-6 py-3 border-b border-zinc-200 text-xs text-zinc-500">
+          <strong>From:</strong> Reve Stitching &lt;notifications@revestitching.com&gt; &nbsp; | &nbsp;
+          <strong>To:</strong> {selectedTemplate === '48h' ? 'Admin Team' : sampleQuote.email} &nbsp; | &nbsp;
+          <strong>Template:</strong> {templates.find(t => t.id === selectedTemplate)?.name}
+        </div>
+        <iframe
+          srcdoc={previewHtml}
+          class="w-full border-0"
+          style="height: 700px;"
+          title="Email Preview"
+        ></iframe>
+      </div>
+    </div>
+  )}
+
+</AdminLayout>

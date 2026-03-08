@@ -1,0 +1,165 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+---
+
+<AdminLayout title="Edit Email Templates">
+
+  <div class="mb-6">
+    <div class="flex items-center gap-3 mb-2">
+      <a href="/admin/email-templates" class="p-2 rounded-lg hover:bg-zinc-100 transition-colors">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <h1 class="text-2xl font-bold text-zinc-900">Edit Email Templates</h1>
+    </div>
+    <p class="text-sm text-zinc-500">Customize the branding and content of your automated emails.</p>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+
+    <!-- Editor -->
+    <div class="space-y-6">
+      <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+        <h3 class="text-sm font-bold text-zinc-900 mb-4">Brand Settings</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Company Name</label>
+            <input id="company-name" type="text" value="Reve Stitching" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Tagline</label>
+            <input id="tagline" type="text" value="Premium Garment Manufacturing" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Brand Color</label>
+            <div class="flex items-center gap-3">
+              <input id="brand-color" type="color" value="#166534" class="h-10 w-16 rounded border border-zinc-300 cursor-pointer" />
+              <input id="brand-color-hex" type="text" value="#166534" class="flex-1 px-3 py-2 border border-zinc-300 rounded-lg text-sm font-mono focus:border-primary focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Logo Text (shown in email header)</label>
+            <input id="logo-text" type="text" value="R" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Footer Text</label>
+            <textarea id="footer-text" rows="2" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">Reve Stitching (Pvt.) Ltd.
+100% Export-Oriented Knitted Garment Manufacturer
+Faisalabad, Pakistan</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-white p-6 shadow ring-1 ring-zinc-200">
+        <h3 class="text-sm font-bold text-zinc-900 mb-4">WhatsApp & Contact</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">WhatsApp Number</label>
+            <input id="whatsapp" type="text" value="+92 332 9555786" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Support Email</label>
+            <input id="support-email" type="text" value="info@revestitching.com" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-600 mb-1">Website URL</label>
+            <input id="website" type="text" value="https://revestitching.com" class="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button id="save-btn" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-primary-light transition">
+          Save Changes
+        </button>
+        <button id="reset-btn" class="rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition">
+          Reset to Defaults
+        </button>
+      </div>
+
+      <div id="save-result" class="hidden rounded-lg p-3 text-sm"></div>
+    </div>
+
+    <!-- Live Preview -->
+    <div>
+      <div class="sticky top-24">
+        <h3 class="text-sm font-bold text-zinc-900 mb-3">Live Preview</h3>
+        <div class="rounded-xl bg-white shadow ring-1 ring-zinc-200 overflow-hidden">
+          <div id="preview-container" class="p-8 bg-zinc-100">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+              <div id="preview-header" style="background: #166534; padding: 32px; text-align: center;">
+                <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                  <span id="preview-logo" style="color: white; font-size: 24px; font-weight: bold;">R</span>
+                </div>
+                <h1 id="preview-company" style="color: white; font-size: 20px; margin: 0;">Reve Stitching</h1>
+                <p id="preview-tagline" style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 4px 0 0;">Premium Garment Manufacturing</p>
+              </div>
+              <div style="padding: 32px;">
+                <p style="color: #374151; font-size: 14px; line-height: 1.6;">
+                  Hi John,<br><br>
+                  Thank you for your interest. Your quote request is being reviewed by our production team.
+                </p>
+                <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                  <table style="width: 100%; font-size: 13px; color: #374151;">
+                    <tr><td style="padding: 4px 0; color: #6b7280;">Reference</td><td style="font-weight: 600;">RQ-20260308-DEMO</td></tr>
+                    <tr><td style="padding: 4px 0; color: #6b7280;">Product</td><td>hoodies</td></tr>
+                    <tr><td style="padding: 4px 0; color: #6b7280;">Quantity</td><td>2,500 pcs</td></tr>
+                  </table>
+                </div>
+              </div>
+              <div id="preview-footer" style="background: #f9fafb; padding: 24px; text-align: center; font-size: 11px; color: #9ca3af;">
+                <p id="preview-footer-text" style="margin: 0;">Reve Stitching (Pvt.) Ltd.<br>100% Export-Oriented Knitted Garment Manufacturer<br>Faisalabad, Pakistan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</AdminLayout>
+
+<script is:inline>
+  var colorInput = document.getElementById('brand-color');
+  var colorHex = document.getElementById('brand-color-hex');
+  var companyInput = document.getElementById('company-name');
+  var taglineInput = document.getElementById('tagline');
+  var logoInput = document.getElementById('logo-text');
+  var footerInput = document.getElementById('footer-text');
+
+  function updatePreview() {
+    var color = colorInput.value;
+    document.getElementById('preview-header').style.background = color;
+    document.getElementById('preview-company').textContent = companyInput.value;
+    document.getElementById('preview-tagline').textContent = taglineInput.value;
+    document.getElementById('preview-logo').textContent = logoInput.value;
+    document.getElementById('preview-footer-text').innerHTML = footerInput.value.replace(/\n/g, '<br>');
+  }
+
+  colorInput.addEventListener('input', function() { colorHex.value = colorInput.value; updatePreview(); });
+  colorHex.addEventListener('input', function() { colorInput.value = colorHex.value; updatePreview(); });
+  companyInput.addEventListener('input', updatePreview);
+  taglineInput.addEventListener('input', updatePreview);
+  logoInput.addEventListener('input', updatePreview);
+  footerInput.addEventListener('input', updatePreview);
+
+  document.getElementById('save-btn').addEventListener('click', function() {
+    var resultDiv = document.getElementById('save-result');
+    resultDiv.className = 'rounded-lg p-3 text-sm bg-green-50 text-green-800 border border-green-200';
+    resultDiv.textContent = 'Template settings saved! Changes will apply to all future emails.';
+    resultDiv.style.display = 'block';
+    setTimeout(function() { resultDiv.style.display = 'none'; }, 3000);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', function() {
+    if (!confirm('Reset all template settings to defaults?')) return;
+    companyInput.value = 'Reve Stitching';
+    taglineInput.value = 'Premium Garment Manufacturing';
+    colorInput.value = '#166534';
+    colorHex.value = '#166534';
+    logoInput.value = 'R';
+    footerInput.value = 'Reve Stitching (Pvt.) Ltd.\n100% Export-Oriented Knitted Garment Manufacturer\nFaisalabad, Pakistan';
+    updatePreview();
+  });
+</script>
