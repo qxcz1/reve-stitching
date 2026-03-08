@@ -2,7 +2,7 @@
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { generateQuoteUnderReviewEmail } from '../../../lib/email-templates/quote-under-review';
 import { generateAdminReminderEmail } from '../../../lib/email-templates/admin-reminder';
-import { generateQuoteReengagementEmail } from '../../../lib/email-templates/quote-reengagement';
+import { generateReengagementEmail } from '../../../lib/email-templates/quote-reengagement';
 
 export const prerender = false;
 
@@ -50,7 +50,7 @@ if (selectedTemplate === '24h') {
   const result = generateAdminReminderEmail(sampleQuote as any);
   previewHtml = result.html;
 } else if (selectedTemplate === '7d') {
-  const result = generateQuoteReengagementEmail(sampleQuote as any);
+  const result = generateReengagementEmail(sampleQuote as any);
   previewHtml = result.html;
 }
 ---
