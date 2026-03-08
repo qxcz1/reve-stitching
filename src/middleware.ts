@@ -3,6 +3,11 @@ import { defineMiddleware } from 'astro:middleware';
 export const onRequest = defineMiddleware(async (context, next) => {
   const path = context.url.pathname;
 
+  // Skip middleware for API routes (they handle their own auth)
+  if (path.startsWith('/api/')) {
+    return next();
+  }
+
   // Only protect /admin routes (except /admin/login)
   const isAdminRoute = path.startsWith('/admin') || path.startsWith('/admin/');
   const isLoginPage = path === '/admin/login' || path === '/admin/login/';
