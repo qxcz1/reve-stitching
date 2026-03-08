@@ -200,7 +200,9 @@ const isActive = quoteStatus === 'new';
             <span><strong>Done!</strong> Processed ${data.stats?.quotesProcessed || 0} quote(s), sent ${data.stats?.emailsSent || 0} email(s)</span>
           `;
           resultDiv.classList.remove('hidden');
-          
+            // Reset button state
+            (btn as HTMLButtonElement).disabled = false;
+            btn.innerHTML = originalHTML;
           setTimeout(() => window.location.reload(), 3000);
         } else {
           throw new Error(data?.error || 'Request failed');
