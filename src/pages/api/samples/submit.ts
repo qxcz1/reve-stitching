@@ -97,6 +97,36 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Email send error:', emailErr);
     }
 
+    // Send admin notification email
+    try {
+        const adminEmail = process.env.NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL;
+        if (adminEmail) {
+          await resend.emails.send({
+            from: 'Reve Stitching <notifications@revestitching.com>',
+            to: adminEmail,
+            subject: `New Sample Request: ${reference_number} - ${company_name.trim()}`,
+            html: `
+              <h2>New Sample Request Received</h2>
+              <table style="border-collapse:collapse;width:100%;max-width:500px;">
+                <tr><td style="padding:8px;color:#666;">Reference</td><td style="padding:8px;font-weight:bold;">${reference_number}</td></tr>
+                <tr><td style="padding:8px;color:#666;">Company</td><td style="padding:8px;">${company_name.trim()}</td></tr>
+                <tr><td style="padding:8px;color:#666;">Contact</td><td style="padding:8px;">${contact_person.trim()}</td></tr>
+                <tr><td style="padding:8px;color:#666;">Email</td><td style="padding:8px;">${email.trim()}</td></tr>
+                <tr><td style="padding:8px;color:#666;">Product</td><td style="padding:8px;">${product_type}</td></tr>
+                <tr><td style="padding:8px;color:#666;">Quantity</td><td style="padding:8px;">${quantity}</td></tr>
+                <tr><td style="padding:8px;color:#666;">Country</td><td style="padding:8px;">${country.trim()}</td></tr>
+                ${fabric_type ? `<tr><td style="padding:8px;color:#666;">Fabric</td><td style="padding:8px;">${fabric_type}</td></tr>` : ''}
+                ${color ? `<tr><td style="padding:8px;color:#666;">Color</td><td style="padding:8px;">${color}</td></tr>` : ''}
+                ${special_requirements ? `<tr><td style="padding:8px;color:#666;">Notes</td><td style="padding:8px;">${special_requirements.trim()}</td></tr>` : ''}
+              </table>
+              <p style="margin-top:20px;"><a href="https://www.revestitching.com/admin/samples" style="background:#166534;color:#fff;padding:10px 20px;text-decoration:none;border-radius:8px;">View in Admin Panel</a></p>
+            `,
+          });
+        }
+      } catch (adminEmailErr) {
+        console.error('Admin email error:', adminEmailErr);
+      }
+
     // Discord notification
     if (process.env.DISCORD_WEBHOOK_URL) {
       try {

@@ -85,7 +85,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         let emailContent: { subject: string; html: string } | null = null;
 
         if (status === 'approved') {
-          emailContent = sampleApprovedEmail({
+          emailContent = await sampleApprovedEmail({
             reference_number: sample.reference_number,
             contact_person: sample.contact_person,
             company_name: sample.company_name,
@@ -94,7 +94,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
             is_free_sample: is_free_sample ?? sample.is_free_sample,
           });
         } else if (status === 'shipped' && (tracking_number || sample.tracking_number)) {
-          emailContent = sampleShippedEmail({
+          emailContent = await sampleShippedEmail({
             reference_number: sample.reference_number,
             contact_person: sample.contact_person,
             company_name: sample.company_name,
@@ -103,7 +103,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
             tracking_number: tracking_number || sample.tracking_number || '',
           });
         } else if (['production', 'delivered', 'rejected'].includes(status)) {
-          emailContent = sampleStatusUpdateEmail({
+          emailContent = await sampleStatusUpdateEmail({
             reference_number: sample.reference_number,
             contact_person: sample.contact_person,
             company_name: sample.company_name,
