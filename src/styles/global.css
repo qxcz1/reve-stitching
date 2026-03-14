@@ -243,8 +243,7 @@ html.has-custom-cursor, html.has-custom-cursor * { cursor: none !important; }
   border: 1.5px solid var(--c-cursor-follower-border);
   background: var(--c-cursor-follower-bg);
   border-radius: 50%;
-  pointer-events: none; z-index: 
-  99998;
+  pointer-events: none; z-index: 99998;
   transform: translate(-50%, -50%);
   will-change: transform, width, height;
   transition: width 0.4s cubic-bezier(0.16,1,0.3,1),
