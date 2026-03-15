@@ -1223,7 +1223,7 @@ function initPinnedSteps() {
       scrollTrigger: {
         trigger: section,
         start: 'top top',
-        end: () => '+=' + (n * 100) + '%',
+        end: () => '+=' + (n * 65) + '%',
         pin: true,
         scrub: 0.5,
         snap: {
