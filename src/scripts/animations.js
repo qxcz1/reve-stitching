@@ -1197,78 +1197,6 @@ function initMouseTracking() {
 }
 
 /* ═══════════════════════════════════════════
-   MODULE: PINNED STEPS (scroll-driven process)
-   ═══════════════════════════════════════════ */
-   function initPinnedSteps() {
-    const section = document.querySelector('[data-pinned-steps]');
-    if (!section) return;
-    if (window.innerWidth < 1024) return; // Mobile: natural stacked flow
-  
-    const panels = Array.from(section.querySelectorAll('[data-step-panel]'));
-    const indicators = Array.from(section.querySelectorAll('[data-step-indicator]'));
-  
-    if (panels.length < 2) return;
-  
-    registerContext('pinnedSteps', () => {
-      const n = panels.length;
-  
-      // Initial state: first panel visible, rest hidden
-      panels.forEach((panel, i) => {
-        gsap.set(panel, {
-          autoAlpha: i === 0 ? 1 : 0,
-          y: i === 0 ? 0 : 60,
-        });
-      });
-  
-      // Master timeline — scrubbed by scroll, snaps to each step
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: 'top top',
-          end: () => `+=${n * 100}%`,
-          pin: true,
-          scrub: 0.5,
-          snap: {
-            snapTo: 1 / (n - 1),
-            duration: { min: 0.15, max: 0.4 },
-            delay: 0.05,
-            ease: 'power1.inOut',
-          },
-          onUpdate: (self) => {
-            // Update step indicators
-            const idx = Math.round(self.progress * (n - 1));
-            indicators.forEach((ind, j) => {
-              ind.classList.toggle('is-active', j === idx);
-            });
-          },
-        },
-      });
-  
-      // Build transitions between panels
-      for (let i = 0; i < n - 1; i++) {
-        // Fade out current panel
-        tl.to(panels[i], {
-          autoAlpha: 0,
-          y: -40,
-          duration: 0.5,
-          ease: 'power2.in',
-        }, i);
-  
-        // Fade in next panel
-        tl.fromTo(
-          panels[i + 1],
-          { autoAlpha: 0, y: 60 },
-          { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' },
-          i + 0.3
-        );
-      }
-  
-      // Set first indicator active
-      if (indicators[0]) indicators[0].classList.add('is-active');
-    });
-  }
-
-/* ═══════════════════════════════════════════
    FALLBACK
    ═══════════════════════════════════════════ */
 function makeEverythingVisible() {
@@ -1337,7 +1265,6 @@ export async function initAnimations() {
         initCounterAnimations();
         initBentoGrid();
         initCTASection();
-        initPinnedSteps();
 
         // Movement
         initParallax();
