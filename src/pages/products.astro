@@ -1,9 +1,4 @@
 ---
-/**
- * src/pages/products.astro
- * FIXED: Product grid and fabric grid use individual data-animate
- *        instead of data-stagger (which caused invisible cards).
- */
 import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import PriceCalculator from '../components/PriceCalculator.astro';
@@ -71,92 +66,92 @@ const fabrics = [
   { name: 'Single Jersey', desc: 'Lightweight, breathable knit perfect for t-shirts and casual wear. Smooth face, soft hand feel.', weight: '120–200 GSM' },
   { name: 'Double Jersey', desc: 'Thicker, more structured knit ideal for polos and upscale casual garments. Excellent dimensional stability.', weight: '180–300 GSM' },
   { name: 'Terry Fleece', desc: 'Soft looped interior for warmth — hoodies, sweatshirts, and loungewear. Brushed or unbrushed options.', weight: '240–400 GSM' },
-  { name: 'Lycra Rib', desc: 'Stretchy, form-fitting fabric for activewear, trims, and ladies\' wear. Outstanding recovery and comfort.', weight: '170–280 GSM' },
+  { name: 'Lycra Rib', desc: "Stretchy, form-fitting fabric for activewear, trims, and ladies' wear. Outstanding recovery and comfort.", weight: '170–280 GSM' },
   { name: 'Interlock', desc: 'Smooth double-knit structure with excellent drape and stability. Ideal for premium basics.', weight: '160–280 GSM' },
   { name: 'Moisture Management', desc: 'High-performance wicking fabric for sportswear and athletic lines. Rapid dry technology.', weight: '140–220 GSM' },
 ];
 ---
 
 <Layout
-  title="Products"
+  title="Products — Reve Stitching"
   description="Explore Reve Stitching's range of premium knitted garments — T-Shirts, Polos, Hoodies, Joggers, Ladies' Wear, Kids' Wear, and specialized fabric garments."
 >
 
-  <!-- ━━━━━━ HERO ━━━━━━ -->
-  <section class="relative py-24 lg:py-32 overflow-hidden" aria-label="Products hero">
-    <div class="absolute inset-0 bg-primary-dark"></div>
+  <!-- ═══════════════════════════════════════
+       HERO — Light, matching homepage style
+       ═══════════════════════════════════════ -->
+  <section class="relative bg-zinc-50 py-24 dark:bg-zinc-950 lg:py-32" aria-label="Products hero">
     <div
-      class="absolute inset-0 opacity-[0.06]"
-      style="background-image: url('https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&w=1920&q=60'); background-size: cover; background-position: center;"
+      class="pointer-events-none absolute inset-0 dark:hidden"
+      aria-hidden="true"
+      style="background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px);background-size:72px 72px"
     ></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-primary-dark/50 to-primary-dark"></div>
+    <div
+      class="pointer-events-none absolute inset-0 hidden dark:block"
+      aria-hidden="true"
+      style="background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:72px 72px"
+    ></div>
 
-    <div class="container-main section-padding relative z-10 text-center">
-      <span class="inline-flex items-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-primary-light mb-6" data-animate="fade-up">
-        <span class="w-8 h-px bg-primary-light"></span>
-        Our Products
-        <span class="w-8 h-px bg-primary-light"></span>
-      </span>
-      <h1 class="font-serif text-display text-white mb-6 max-w-3xl mx-auto" data-animate="fade-up" data-delay="0.1">
-        Premium Knitted <span class="text-primary-light">Garments</span>
+    <div class="relative z-10 mx-auto max-w-[90rem] px-6 text-center sm:px-8 lg:px-12 xl:px-16">
+      <div class="mb-6 flex items-center justify-center gap-3" data-animate="fade-up">
+        <span class="block h-px w-8 bg-green-600 dark:bg-green-400" aria-hidden="true"></span>
+        <span class="text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Our Products</span>
+        <span class="block h-px w-8 bg-green-600 dark:bg-green-400" aria-hidden="true"></span>
+      </div>
+      <h1 class="font-serif text-4xl font-bold text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl" data-animate="fade-up" data-delay="0.08">
+        Premium Knitted <span class="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-300">Garments</span>
       </h1>
-      <p class="text-lg text-green-100/70 max-w-2xl mx-auto leading-relaxed" data-animate="fade-up" data-delay="0.2">
+      <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-500 dark:text-zinc-400" data-animate="fade-up" data-delay="0.16">
         From classic cotton tees to specialized performance wear, we manufacture a diverse range of knitted garments with precision and care.
       </p>
     </div>
   </section>
 
-  <!-- ━━━━━━ PRICE CALCULATOR ━━━━━━ -->
+
+  <!-- ═══════════════════════════════════════
+       PRICE CALCULATOR
+       ═══════════════════════════════════════ -->
   <section
-    class="py-20 bg-white border-b border-zinc-100"
+    class="bg-white py-20 dark:bg-zinc-950 lg:py-24"
     aria-label="Price calculator"
     id="calculate"
   >
-    <div class="container-main section-padding">
-      <div class="max-w-3xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-10">
-          <h2
-            class="text-2xl font-bold text-zinc-900 mb-3"
-            data-animate="fade-up"
-          >
+    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+      <div class="mx-auto max-w-3xl">
+        <div class="mb-10 text-center">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white" data-animate="fade-up">
             Calculate Your Order Cost
           </h2>
-          <p
-            class="text-sm text-zinc-600 max-w-md mx-auto"
-            data-animate="fade-up"
-            data-delay="0.1"
-          >
-            Select a product below, adjust quantity and options to see instant
-            pricing estimates for your bulk order.
+          <p class="mx-auto mt-3 max-w-md text-sm text-zinc-500 dark:text-zinc-400" data-animate="fade-up" data-delay="0.1">
+            Select a product below, adjust quantity and options to see instant pricing estimates for your bulk order.
           </p>
         </div>
-
-        <!-- Calculator -->
-        <div data-animate="fade-up" data-delay="0.2">
+        <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 p-6 shadow-lg shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none sm:p-8" data-animate="fade-up" data-delay="0.15">
           <PriceCalculator />
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ━━━━━━ PRODUCT GRID — FIXED: individual animations ━━━━━━ -->
-  <section class="py-24 lg:py-32 bg-white" aria-labelledby="products-heading">
-    <div class="container-main section-padding">
-      <div class="text-center mb-16">
-        <span class="section-label justify-center" data-animate="fade-up">Product Range</span>
-        <h2 id="products-heading" class="heading-headline mb-5" data-animate="fade-up" data-delay="0.1">
-          What We <span class="text-gradient">Manufacture</span>
+
+  <!-- ═══════════════════════════════════════
+       PRODUCT GRID
+       ═══════════════════════════════════════ -->
+  <section class="bg-zinc-50 py-24 dark:bg-zinc-900 lg:py-32" aria-labelledby="products-heading">
+    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+      <div class="mb-16 text-center">
+        <span class="mb-3 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400" data-animate="fade-up">Product Range</span>
+        <h2 id="products-heading" class="font-serif text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl lg:text-5xl" data-animate="fade-up" data-delay="0.08">
+          What We <span class="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-300">Manufacture</span>
         </h2>
-        <p class="text-body max-w-xl mx-auto" data-animate="fade-up" data-delay="0.2">
+        <p class="mx-auto mt-4 max-w-xl text-base text-zinc-500 dark:text-zinc-400" data-animate="fade-up" data-delay="0.16">
           Eight core product categories, each customizable to your brand specifications.
         </p>
       </div>
 
-      <!-- FIXED: No data-stagger, each ProductCard wraps in a div with data-animate -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((product, i) => (
-          <div data-animate="fade-up" data-delay={String(i * 0.08)}>
+          <div data-animate="fade-up" data-delay={String(i * 0.06)}>
             <ProductCard
               name={product.name}
               image={product.image}
@@ -171,38 +166,41 @@ const fabrics = [
     </div>
   </section>
 
-  <!-- ━━━━━━ FABRIC PORTFOLIO — FIXED: individual animations ━━━━━━ -->
-  <section class="py-24 lg:py-32 bg-surface" aria-labelledby="fabrics-heading">
-    <div class="container-main section-padding">
-      <div class="text-center mb-16">
-        <span class="section-label justify-center" data-animate="fade-up">Fabric Portfolio</span>
-        <h2 id="fabrics-heading" class="heading-headline mb-5" data-animate="fade-up" data-delay="0.1">
-          Our <span class="text-gradient">Fabric</span> Range
+
+  <!-- ═══════════════════════════════════════
+       FABRIC PORTFOLIO
+       ═══════════════════════════════════════ -->
+  <section class="bg-white py-24 dark:bg-zinc-950 lg:py-32" aria-labelledby="fabrics-heading">
+    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+      <div class="mb-16 text-center">
+        <span class="mb-3 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400" data-animate="fade-up">Fabric Portfolio</span>
+        <h2 id="fabrics-heading" class="font-serif text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl lg:text-5xl" data-animate="fade-up" data-delay="0.08">
+          Our <span class="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-300">Fabric</span> Range
         </h2>
-        <p class="text-body max-w-xl mx-auto" data-animate="fade-up" data-delay="0.2">
+        <p class="mx-auto mt-4 max-w-xl text-base text-zinc-500 dark:text-zinc-400" data-animate="fade-up" data-delay="0.16">
           We work with a diverse range of high-quality knitted fabrics to meet every requirement.
         </p>
       </div>
 
-      <!-- FIXED: individual data-animate per fabric card -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {fabrics.map((fabric, index) => (
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {fabrics.map((fabric, i) => (
           <article
-            class="bg-white rounded-2xl border border-zinc-100 p-8 group hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-500"
+            class="group rounded-2xl border border-zinc-200 bg-zinc-50 p-8 transition-all duration-500 hover:border-green-500/20 hover:shadow-lg hover:shadow-green-500/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-green-400/20"
             data-animate="fade-up"
-            data-delay={String(index * 0.1)}
+            data-delay={String(i * 0.08)}
+            data-tilt
           >
-            <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-              <svg class="w-7 h-7 text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10 transition-all duration-300 group-hover:scale-110 group-hover:bg-green-600 dark:group-hover:bg-green-500">
+              <svg class="h-7 w-7 text-green-600 transition-colors group-hover:text-white dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0L12 17.25 6.43 14.25m11.142 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25"/>
               </svg>
             </div>
 
-            <h3 class="text-lg font-bold text-zinc-900 mb-2">{fabric.name}</h3>
-            <p class="text-sm text-zinc-500 leading-relaxed mb-4">{fabric.desc}</p>
+            <h3 class="text-lg font-bold text-zinc-900 dark:text-white">{fabric.name}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{fabric.desc}</p>
 
-            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-surface px-3 py-1.5 rounded-full border border-border">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span class="mt-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-green-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-green-400">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               {fabric.weight}
             </span>
           </article>
@@ -211,20 +209,30 @@ const fabrics = [
     </div>
   </section>
 
-  <!-- ━━━━━━ CTA ━━━━━━ -->
-  <section class="py-20 bg-primary-dark relative overflow-hidden">
-    <div class="absolute inset-0 opacity-5">
-      <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
-    </div>
-    <div class="container-main section-padding relative z-10">
-      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+
+  <!-- ═══════════════════════════════════════
+       CTA
+       ═══════════════════════════════════════ -->
+  <section class="relative bg-zinc-900 py-20 dark:bg-zinc-950" aria-label="Call to action">
+    <div class="pointer-events-none absolute inset-0 opacity-[0.04]" aria-hidden="true"
+      style="background-image:radial-gradient(circle at 1px 1px, white 1px, transparent 0);background-size:40px 40px"
+    ></div>
+
+    <div class="relative z-10 mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+      <div class="flex flex-col items-center justify-between gap-8 lg:flex-row">
         <div>
-          <h2 class="font-serif text-title text-white mb-2" data-animate="fade-up">Need Custom Specifications?</h2>
-          <p class="text-green-100/70" data-animate="fade-up" data-delay="0.1">Send us your tech pack — we'll provide a detailed quote within 24 hours.</p>
+          <h2 class="font-serif text-2xl font-bold text-white sm:text-3xl" data-animate="fade-up">Need Custom Specifications?</h2>
+          <p class="mt-2 text-green-100/60" data-animate="fade-up" data-delay="0.1">Send us your tech pack — we'll provide a detailed quote within 24 hours.</p>
         </div>
-        <a href="/contact/" class="btn-white shrink-0" data-magnetic data-animate="fade-up" data-delay="0.2">
+        <a
+          href="/quote/"
+          class="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold uppercase tracking-wider text-zinc-900 shadow-lg transition-all hover:bg-zinc-100"
+          data-magnetic
+          data-animate="fade-up"
+          data-delay="0.15"
+        >
           Request a Quote
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
     </div>
