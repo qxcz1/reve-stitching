@@ -1198,73 +1198,217 @@ function initMouseTracking() {
 
 /* ═══════════════════════════════════════════
    MODULE: PINNED STEPS (scroll-driven process)
+   Premium scroll-driven panels with high responsiveness
    ═══════════════════════════════════════════ */
    function initPinnedSteps() {
     var sections = document.querySelectorAll('[data-pinned-steps]');
     if (!sections.length) return;
     if (window.innerWidth < 1024) return;
   
-    sections.forEach(function(section) {
+    sections.forEach(function (section) {
       var panels = Array.from(section.querySelectorAll('[data-step-panel]'));
       var indicators = Array.from(section.querySelectorAll('[data-step-indicator]'));
   
       if (panels.length < 2) return;
   
-      registerContext('pinnedSteps-' + Math.random().toString(36).slice(2, 8), function() {
-        var n = panels.length;
+      registerContext(
+        'pinnedSteps-' + Math.random().toString(36).slice(2, 8),
+        function () {
+          var n = panels.length;
   
-        panels.forEach(function(panel, i) {
-          gsap.set(panel, {
-            autoAlpha: i === 0 ? 1 : 0,
-            y: i === 0 ? 0 : 50,
+          /* ── Track state to avoid redundant DOM thrashing ── */
+          var currentIdx = 0;
+          var previousIdx = -1;
+  
+          /* ── Initial panel setup with GPU-accelerated properties ── */
+          panels.forEach(function (panel, i) {
+            gsap.set(panel, {
+              autoAlpha: i === 0 ? 1 : 0,
+              y: i === 0 ? 0 : 40,
+              willChange: 'transform, opacity',
+              force3D: true,
+            });
           });
-        });
   
-        var tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: 'top top',
-            end: function() { return '+=' + (n * 45) + '%'; },
-            pin: true,
-            scrub: 0.3,
-            snap: {
-              snapTo: 1 / (n - 1),
-              duration: { min: 0.2, max: 0.6 },
-              delay: 0,
-              ease: 'power2.inOut',
-              inertia: false,
-            },
-            onUpdate: function(self) {
-              var idx = Math.round(self.progress * (n - 1));
-              indicators.forEach(function(ind, j) {
-                if (j === idx) {
-                  ind.classList.add('is-active');
-                } else {
-                  ind.classList.remove('is-active');
+          /* ── Shorter scroll distance = less scrolling needed per step ── */
+          var scrollPerStep = 30; // vh per step — tighter = more responsive
+          var totalScrollDistance = n * scrollPerStep;
+  
+          var tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: section,
+              start: 'top top',
+              end: function () {
+                return '+=' + totalScrollDistance + '%';
+              },
+              pin: true,
+              pinSpacing: true,
+  
+              /* ── Near-zero scrub for instant response ── */
+              scrub: 0.08, // ultra-low scrub = near-instant tracking
+  
+              /* ── Refined snap for crisp step-locking ── */
+              snap: {
+                snapTo: 1 / (n - 1),
+                duration: { min: 0.15, max: 0.4 },
+                delay: 0,
+                ease: 'power3.out',
+                inertia: false,
+              },
+  
+              /* ── Optimized update callback ── */
+              onUpdate: function (self) {
+                var progress = self.progress;
+  
+                /* Clamp and calculate current index */
+                var rawIdx = progress * (n - 1);
+                var idx = Math.round(rawIdx);
+                idx = Math.max(0, Math.min(n - 1, idx));
+  
+                /* Only update DOM when index actually changes */
+                if (idx !== previousIdx) {
+                  previousIdx = idx;
+                  currentIdx = idx;
+  
+                  /* Batch indicator updates */
+                  for (var j = 0; j < indicators.length; j++) {
+                    if (j === idx) {
+                      if (!indicators[j].classList.contains('is-active')) {
+                        indicators[j].classList.add('is-active');
+                      }
+                    } else {
+                      indicators[j].classList.remove('is-active');
+                    }
+                  }
                 }
-              });
+              },
+  
+              /* ── Ensure clean state on refresh ── */
+              onRefresh: function () {
+                previousIdx = -1;
+              },
             },
-          },
-        });
+          });
   
-        for (var i = 0; i < n - 1; i++) {
-          tl.to(panels[i], {
-            autoAlpha: 0,
-            y: -30,
-            duration: 0.5,
-            ease: 'power2.in',
-          }, i);
+          /* ── Build transitions with tighter overlaps for snappy feel ── */
+          for (var i = 0; i < n - 1; i++) {
+            var stepStart = i;
   
-          tl.fromTo(
-            panels[i + 1],
-            { autoAlpha: 0, y: 50 },
-            { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' },
-            i + 0.35
-          );
+            /* Outgoing panel — swift exit */
+            tl.to(
+              panels[i],
+              {
+                autoAlpha: 0,
+                y: -25,
+                scale: 0.98,
+                duration: 0.45,
+                ease: 'power3.in',
+                force3D: true,
+              },
+              stepStart
+            );
+  
+            /* Incoming panel — overlapping entrance for seamless flow */
+            tl.fromTo(
+              panels[i + 1],
+              {
+                autoAlpha: 0,
+                y: 40,
+                scale: 1.01,
+              },
+              {
+                autoAlpha: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.45,
+                ease: 'power3.out',
+                force3D: true,
+              },
+              stepStart + 0.2 // tighter overlap = less dead zone
+            );
+          }
+  
+          /* ── Set initial active indicator ── */
+          if (indicators[0]) {
+            indicators[0].classList.add('is-active');
+          }
+  
+          /* ── Normalize scroll delta for consistent feel across devices ── */
+          var scrollNormalizer = null;
+  
+          try {
+            scrollNormalizer = ScrollTrigger.normalizeScroll({
+              allowNestedScroll: true,
+              lockAxis: false,
+              momentum: function (self) {
+                /* Minimal momentum for crisp stopping */
+                return Math.min(self, 0.08);
+              },
+              type: 'pointer,touch,wheel',
+            });
+          } catch (e) {
+            /* normalizeScroll not available — graceful fallback */
+          }
+  
+          /* ── Wheel event interceptor for amplified scroll sensitivity ── */
+          var wheelMultiplier = 1.8; // amplify small scrolls
+          var isIntercepting = false;
+          var accumulatedDelta = 0;
+          var wheelRAF = null;
+  
+          function onWheel(e) {
+            /* Only intercept when section is pinned/active */
+            var st = tl.scrollTrigger;
+            if (!st || !st.isActive) return;
+  
+            var delta = e.deltaY;
+  
+            /* Detect trackpad vs mouse wheel */
+            var isTrackpad =
+              Math.abs(delta) < 50 ||
+              (e.deltaMode === 0 && Math.abs(delta) < 120);
+  
+            /* Apply multiplier — stronger for light/trackpad scrolls */
+            var multiplier = isTrackpad ? wheelMultiplier * 1.4 : wheelMultiplier;
+  
+            /* Amplify the scroll */
+            var amplifiedDelta = delta * (multiplier - 1);
+  
+            /* Accumulate for smooth application */
+            accumulatedDelta += amplifiedDelta;
+  
+            if (!wheelRAF) {
+              wheelRAF = requestAnimationFrame(function () {
+                if (Math.abs(accumulatedDelta) > 0.5) {
+                  window.scrollBy({
+                    top: accumulatedDelta,
+                    behavior: 'auto', // instant, no smooth — we want raw speed
+                  });
+                }
+                accumulatedDelta = 0;
+                wheelRAF = null;
+              });
+            }
+          }
+  
+          section.addEventListener('wheel', onWheel, { passive: true });
+  
+          /* ── Cleanup on context revert ── */
+          return function () {
+            section.removeEventListener('wheel', onWheel);
+            if (wheelRAF) {
+              cancelAnimationFrame(wheelRAF);
+              wheelRAF = null;
+            }
+            if (scrollNormalizer && scrollNormalizer.kill) {
+              scrollNormalizer.kill();
+            }
+            panels.forEach(function (panel) {
+              gsap.set(panel, { clearProps: 'all' });
+            });
+          };
         }
-  
-        if (indicators[0]) indicators[0].classList.add('is-active');
-      });
+      );
     });
   }
 
