@@ -116,7 +116,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           initAnimations();
         } catch (e) {
           console.warn('Animation initialization failed:', e);
-          document.querySelectorAll('[data-animate], [data-stagger] > *, [data-bento-item], [data-cta-title], [data-step-panel]').forEach((el) => {
+          document.querySelectorAll('[data-animate], [data-stagger] > *, [data-bento-item], [data-cta-title]').forEach((el) => {
             (el as HTMLElement).style.opacity = '1';
             (el as HTMLElement).style.transform = 'none';
           });
