@@ -116,7 +116,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           initAnimations();
         } catch (e) {
           console.warn('Animation initialization failed:', e);
-          document.querySelectorAll('[data-animate], [data-stagger] > *, [data-bento-item], [data-cta-title]').forEach((el) => {
+          document.querySelectorAll('[data-animate], [data-stagger] > *, [data-bento-item], [data-cta-title], [data-step-panel]').forEach((el) => {
             (el as HTMLElement).style.opacity = '1';
             (el as HTMLElement).style.transform = 'none';
           });
@@ -129,7 +129,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <script is:inline>
       setTimeout(function() {
         if (!document.documentElement.classList.contains('gsap-ready')) {
-          var els = document.querySelectorAll('[data-animate], [data-stagger] > *, [data-bento-item], [data-cta-title]');
+          var els = document.querySelectorAll('[data-animate], [data-stagger] > *, [data-bento-item], [data-cta-title], [data-step-panel]');
           for (var i = 0; i < els.length; i++) {
             els[i].style.opacity = '1';
             els[i].style.transform = 'none';

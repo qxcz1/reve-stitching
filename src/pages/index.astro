@@ -1,65 +1,63 @@
 ---
 /**
- * Reve Stitching — Homepage (Premium Redesign)
- * Scroll-driven cinematic experience. Apple × Stripe × Linear.
- *
- * Animation handled entirely through data-attributes.
- * Layout.astro provides: Header, Footer, ChatWidget,
- * CustomCursor, MouseBackground, ScrollProgress, PageTransition.
+ * Reve Stitching — Homepage
+ * Clean, honest, scroll-driven cinematic experience.
+ * Process section uses pinned steps with scroll snap.
+ * Light mode default. Only Hero + CTA are dark.
  */
 import Layout from '../layouts/Layout.astro';
 import PriceCalculator from '../components/PriceCalculator.astro';
 
-const title = 'Reve Stitching — Premium Garment Manufacturing for Global Brands';
+const title = 'Reve Stitching — Premium Garment Manufacturing';
 const description =
-  '100% export-oriented knitted garment manufacturer based in Faisalabad, Pakistan. Serving UK & EU retailers with premium quality, fast turnaround, and ethical production.';
+  '100% export-oriented knitted garment manufacturer based in Faisalabad, Pakistan. 300K+ monthly capacity, 25-50 day lead times, serving UK retailers.';
 
 const steps = [
   {
     num: '01',
     title: 'Design & Development',
-    body: 'Your vision meets our expertise. We collaborate on design concepts, fabric selection, and technical specifications to create the perfect blueprint for your garments.',
+    body: 'We collaborate on design concepts, fabric selection, and technical specifications to create the perfect blueprint for your garments.',
     tags: ['CAD Patterns', 'Tech Packs', 'Fabric Sourcing'],
   },
   {
     num: '02',
     title: 'Sampling',
-    body: 'Before mass production begins we create detailed samples for your approval — fit samples, pre-production samples, and size sets — perfected to your exact specifications.',
+    body: 'Detailed samples for your approval — fit samples, pre-production samples, and size sets — perfected to your exact specifications before production begins.',
     tags: ['Fit Samples', 'PP Samples', 'Size Sets'],
   },
   {
     num: '03',
     title: 'Production',
-    body: 'State-of-the-art knitting, cutting, stitching, and finishing lines operate with surgical precision. Real-time quality monitoring ensures consistency across every single piece.',
+    body: 'State-of-the-art knitting, cutting, stitching, and finishing lines with real-time quality monitoring ensuring consistency across every piece.',
     tags: ['Knitting', 'Cutting', 'Stitching', 'Finishing'],
   },
   {
     num: '04',
     title: 'Quality Control',
-    body: 'Every garment passes through rigorous AQL 2.5 inspection. Fabric testing, measurement checks, and final audits guarantee export-ready quality — no exceptions.',
+    body: 'Every garment passes through rigorous AQL 2.5 inspection. Fabric testing, measurement checks, and final audits guarantee export-ready quality.',
     tags: ['AQL 2.5', 'Lab Testing', 'Final Audit'],
   },
   {
     num: '05',
     title: 'Shipment',
-    body: 'Expertly packed and dispatched worldwide. We handle logistics coordination, documentation, and customs compliance for seamless delivery to your warehouse door.',
+    body: 'Expertly packed and dispatched. We handle logistics coordination, documentation, and customs compliance for seamless delivery to your door.',
     tags: ['Packing', 'Logistics', 'Documentation'],
   },
 ];
 
 const products = [
-  { name: 'T-Shirts', slug: 't-shirts' },
-  { name: 'Hoodies & Sweatshirts', slug: 'hoodies' },
-  { name: 'Polo Shirts', slug: 'polo-shirts' },
-  { name: 'Joggers & Trousers', slug: 'joggers' },
-  { name: "Ladies' Wear", slug: 'ladies-wear' },
-  { name: "Kids' Wear", slug: 'kids-wear' },
+  { name: 'T-Shirts' },
+  { name: 'Hoodies & Sweatshirts' },
+  { name: 'Polo Shirts' },
+  { name: 'Joggers & Trousers' },
+  { name: "Ladies' Wear" },
+  { name: "Kids' Wear" },
 ];
 
 const capabilities = [
   {
     title: 'Premium Quality',
-    body: 'International quality standards with AQL 2.5 inspection and lab-tested fabrics. Every garment is built to exceed expectations.',
+    body: 'International quality standards with AQL 2.5 inspection and lab-tested fabrics across every production run.',
   },
   {
     title: 'Fast Turnaround',
@@ -67,158 +65,108 @@ const capabilities = [
   },
   {
     title: 'Custom Solutions',
-    body: 'Full customisation — fabrics, washes, prints, embroidery, labels, and packaging — all tailored to your brand.',
+    body: 'Full customisation — fabrics, washes, prints, embroidery, labels, and packaging tailored to your brand.',
   },
   {
     title: 'Ethical Production',
-    body: 'Fair wages, safe working conditions, and sustainable practices across every facility we operate.',
+    body: 'SEDEX certified. Fair wages, safe working conditions, and sustainable practices across our facility.',
   },
   {
-    title: 'Global Reach',
-    body: 'Exporting to the UK, EU, and beyond. Trusted by leading high-street and e-commerce retailers.',
+    title: 'UK Market Focused',
+    body: 'Built for UK retailers. We understand UK sizing, compliance requirements, and delivery expectations.',
   },
   {
     title: 'Tech-Driven',
-    body: 'Modern machinery, digital pattern-making, and real-time production tracking dashboards.',
+    body: 'Modern machinery, digital pattern-making, and ERP-powered production tracking for full transparency.',
   },
 ];
 
-const clients = [
-  'Boohoo',
-  'Pull & Bear',
-  'Yours Clothing',
-  'Simply Be',
-  'JD Williams',
-  'Jacamo',
-];
+const clients = ['Boohoo', 'Pull & Bear', 'Yours Clothing', 'Simply Be', 'JD Williams', 'Jacamo'];
 ---
 
 <Layout title={title} description={description}>
 
-  <!-- ════════════════════════════════════════════════════════
-       HERO — Fullscreen cinematic, dark, asymmetric text
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       1. HERO — Dark, cinematic, clean
+       ═══════════════════════════════════════ -->
   <section
     id="hero"
-    class="relative min-h-[calc(100dvh-5rem)] flex flex-col bg-zinc-950"
+    class="relative flex min-h-[calc(100dvh-5rem)] flex-col bg-zinc-950"
     data-snap
     data-hero
     data-cursor-dark
     aria-label="Hero"
   >
-    <!-- Background (Ken Burns zoom via data-hero-deco) -->
-    <div class="absolute inset-0 scale-[1.08] will-change-transform" data-hero-deco>
-      <!-- TODO: Replace with factory panoramic photo or video loop
-           <img src="/images/hero-bg.jpg" alt="" class="h-full w-full object-cover" loading="eager" />
-      -->
+    <div class="absolute inset-0" data-hero-deco>
       <div class="absolute inset-0 bg-zinc-900"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/75 to-zinc-950/20"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/40"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-zinc-950/30"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/50"></div>
     </div>
 
-    <!-- Subtle grid texture -->
     <div
       class="pointer-events-none absolute inset-0 opacity-[0.03]"
       aria-hidden="true"
-      style="background-image:linear-gradient(rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px);background-size:72px 72px"
+      style="background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);background-size:72px 72px"
     ></div>
 
-    <!-- Content — pushed to bottom with mt-auto -->
-    <div class="relative z-10 mt-auto pb-16 sm:pb-20 lg:pb-28 xl:pb-32" data-hero-content>
+    <div class="relative z-10 mt-auto pb-16 sm:pb-20 lg:pb-28" data-hero-content>
       <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
 
-        <!-- Eyebrow -->
-        <div class="mb-7 flex items-center gap-3 lg:mb-9" data-animate="fade-up">
+        <div class="mb-7 flex items-center gap-3" data-animate="fade-up">
           <span class="block h-px w-8 bg-green-400" aria-hidden="true"></span>
           <span class="text-[11px] font-semibold uppercase tracking-[0.3em] text-green-400">
-            Export Garment Manufacturer · Faisalabad → UK&nbsp;&amp;&nbsp;EU
+            Export Garment Manufacturer · Faisalabad, Pakistan
           </span>
         </div>
 
-        <!-- Heading — each line staggers in -->
         <h1>
           <span
-            class="block font-serif font-bold leading-[0.88] tracking-tight text-white"
-            style="font-size:clamp(2.75rem,7.5vw,9.5rem)"
+            class="block font-serif font-bold leading-[0.9] tracking-tight text-white"
+            style="font-size:clamp(2.5rem,7vw,8rem)"
             data-animate="fade-up"
-          >
-            Premium Garment
-          </span>
+          >Premium Garment</span>
           <span
-            class="block font-serif font-bold leading-[0.88] tracking-tight text-white"
-            style="font-size:clamp(2.75rem,7.5vw,9.5rem)"
+            class="block font-serif font-bold leading-[0.9] tracking-tight text-white"
+            style="font-size:clamp(2.5rem,7vw,8rem)"
             data-animate="fade-up"
-            data-delay="0.1"
-          >
-            Manufacturing for
-          </span>
+            data-delay="0.08"
+          >Manufacturing for</span>
           <span
-            class="block font-serif font-bold leading-[0.88] tracking-tight"
-            style="font-size:clamp(2.75rem,7.5vw,9.5rem)"
+            class="block font-serif font-bold leading-[0.9] tracking-tight"
+            style="font-size:clamp(2.5rem,7vw,8rem)"
             data-animate="fade-up"
-            data-delay="0.2"
-          >
-            <span class="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
-              Global Brands
-            </span>
-          </span>
+            data-delay="0.16"
+          ><span class="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Global Brands</span></span>
         </h1>
 
-        <!-- Sub-copy + CTA -->
         <div class="mt-10 flex flex-col gap-8 lg:mt-14 lg:flex-row lg:items-end lg:justify-between">
           <p
-            class="max-w-lg text-base leading-relaxed text-zinc-400 sm:text-lg lg:text-xl"
+            class="max-w-lg text-base leading-relaxed text-zinc-400 sm:text-lg"
             data-animate="fade-up"
-            data-delay="0.3"
+            data-delay="0.24"
           >
-            100% export-oriented knitted garment manufacturer.
-            From Faisalabad to the world's leading retailers —
-            with precision, speed, and integrity.
+            100% export-oriented knitted garment manufacturer with 300,000+ monthly
+            capacity. From concept to container — delivering quality UK retailers trust.
           </p>
 
-          <div class="flex items-center gap-4" data-animate="fade-up" data-delay="0.4">
+          <div class="flex items-center gap-4" data-animate="fade-up" data-delay="0.32">
             <a
               href="/quote/"
-              class="inline-flex items-center gap-2 rounded-full bg-green-500 px-8 py-4 text-sm font-bold uppercase tracking-wider text-zinc-950 shadow-xl shadow-green-500/20 transition-all duration-300 hover:bg-green-400 hover:shadow-green-400/25"
+              class="inline-flex items-center gap-2 rounded-full bg-green-500 px-8 py-4 text-sm font-bold uppercase tracking-wider text-zinc-950 shadow-xl shadow-green-500/20 transition-all duration-300 hover:bg-green-400"
               data-magnetic
             >
               Get a Quote
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </a>
-            <a
-              href="/products/"
-              class="px-5 py-4 text-sm font-medium uppercase tracking-wider text-white/60 transition-colors hover:text-white"
-            >
-              View Our Work
+            <a href="/products/" class="px-5 py-4 text-sm font-medium uppercase tracking-wider text-white/60 transition-colors hover:text-white">
+              View Products
             </a>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Floating stat badges (desktop only) -->
-    <div class="pointer-events-none absolute right-[7%] top-[26%] z-10 hidden xl:block" data-float>
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/80 px-5 py-4">
-        <span class="block text-2xl font-bold text-white">300K+</span>
-        <span class="text-[11px] uppercase tracking-wider text-zinc-400">Monthly Pieces</span>
-      </div>
-    </div>
-    <div
-      class="pointer-events-none absolute right-[14%] top-[52%] z-10 hidden xl:block"
-      data-float
-      data-float-amplitude="10"
-      data-float-duration="5.5"
-    >
-      <div class="rounded-2xl border border-white/10 bg-zinc-900/80 px-5 py-4">
-        <span class="block text-2xl font-bold text-green-400">10+</span>
-        <span class="text-[11px] uppercase tracking-wider text-zinc-400">Years Experience</span>
-      </div>
-    </div>
-
-    <!-- Scroll indicator -->
-    <div class="absolute inset-x-0 bottom-6 z-10 flex justify-center" aria-hidden="true" data-animate="fade-up" data-delay="0.6">
+    <div class="absolute inset-x-0 bottom-6 z-10 flex justify-center" aria-hidden="true" data-animate="fade-up" data-delay="0.5">
       <div class="flex flex-col items-center gap-2">
         <span class="text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-500">Scroll</span>
         <div class="flex h-9 w-5 items-start justify-center rounded-full border border-zinc-600 p-1">
@@ -228,358 +176,276 @@ const clients = [
     </div>
   </section>
 
-  <!-- ════════════════════════════════════════════════════════
-       PROCESS — Sticky left + scrolling right panels
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       2. STATS — Light, animated counters
+       ═══════════════════════════════════════ -->
   <section
-    id="process"
-    class="relative bg-zinc-950"
+    id="stats"
+    class="bg-white py-20 dark:bg-zinc-950 lg:py-24"
     data-snap
-    data-cursor-dark
-    aria-label="Our Production Process"
+    aria-label="Key Statistics"
   >
-    <!-- Section header -->
-    <div class="mx-auto max-w-[90rem] px-6 pb-16 pt-24 sm:px-8 lg:px-12 lg:pb-0 lg:pt-32 xl:px-16">
-      <div class="max-w-2xl" data-animate="fade-up">
-        <span class="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-400">
-          How We Work
-        </span>
-        <h2 class="font-serif text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-          From Concept<br class="hidden sm:block" /> to Container
-        </h2>
-        <p class="mt-6 text-lg leading-relaxed text-zinc-400">
-          A vertically-integrated production workflow built for reliability,
-          speed, and uncompromising quality at every stage.
-        </p>
+    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+      <div class="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12" data-stagger="0.1">
+
+        <div class="text-center" data-animate="fade-up">
+          <div class="font-serif text-4xl font-bold text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
+            <span data-counter="300000">0</span><span class="text-green-600 dark:text-green-400">+</span>
+          </div>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Monthly Capacity</p>
+        </div>
+
+        <div class="text-center" data-animate="fade-up">
+          <div class="font-serif text-4xl font-bold text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
+            <span data-counter="25">0</span>–<span data-counter="50">0</span>
+          </div>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Days Lead Time</p>
+        </div>
+
+        <div class="text-center" data-animate="fade-up">
+          <div class="font-serif text-4xl font-bold text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
+            <span data-counter="100">0</span><span class="text-green-600 dark:text-green-400">%</span>
+          </div>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Export Oriented</p>
+        </div>
+
+        <div class="text-center" data-animate="fade-up">
+          <div class="font-serif text-4xl font-bold text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
+            <span data-counter="10">0</span><span class="text-green-600 dark:text-green-400">+</span>
+          </div>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Years Experience</p>
+        </div>
+
       </div>
     </div>
+  </section>
 
-    <!-- Sticky + Scrolling grid -->
-    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:grid lg:grid-cols-2 lg:gap-0 lg:px-0">
-      <!-- LEFT — sticky panel (desktop only) -->
-      <div class="hidden lg:block">
-        <div class="sticky top-0 flex h-screen flex-col justify-center px-12 xl:px-16">
-          <div class="relative">
-            <span
-              class="pointer-events-none absolute -left-4 -top-20 select-none font-serif text-[14rem] font-bold leading-none text-white/[0.03]"
-              aria-hidden="true"
-            >05</span>
+  <!-- ═══════════════════════════════════════
+       3. PROCESS — Pinned scroll with snap
+       Desktop: section pins, scroll transitions between steps
+       Mobile: steps stack vertically
+       ═══════════════════════════════════════ -->
+  <section
+    id="process"
+    class="relative bg-zinc-50 dark:bg-zinc-900 lg:overflow-hidden"
+    data-pinned-steps
+    aria-label="Our Production Process"
+  >
+    <div class="lg:flex lg:h-screen" data-steps-viewport>
 
-            <div class="absolute -left-8 bottom-0 top-0 w-px bg-gradient-to-b from-green-500/60 via-green-500/20 to-transparent" aria-hidden="true"></div>
+      <!-- LEFT: Section info + step indicators (desktop) -->
+      <div class="px-6 py-16 sm:px-8 lg:flex lg:w-[42%] lg:flex-col lg:justify-center lg:px-16 lg:py-0 xl:px-20">
+        <div>
+          <span class="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400" data-animate="fade-up">
+            How We Work
+          </span>
+          <h2 class="font-serif text-3xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-4xl lg:text-5xl" data-animate="fade-up">
+            From Concept<br />to Container
+          </h2>
+          <p class="mt-5 max-w-md text-base leading-relaxed text-zinc-600 dark:text-zinc-400" data-animate="fade-up">
+            A vertically-integrated production workflow built for
+            reliability, speed, and quality at every stage.
+          </p>
 
-            <p class="text-sm font-medium uppercase tracking-[0.2em] text-green-400">
-              Production Workflow
-            </p>
-            <p class="mt-4 text-3xl font-bold text-white xl:text-4xl">
-              5 Precision<br />Controlled Stages
-            </p>
-            <p class="mt-5 max-w-md text-base leading-relaxed text-zinc-500">
-              Every garment passes through a streamlined pipeline designed to
-              deliver export-grade quality on time, every time.
-            </p>
-
-            <ul class="mt-10 space-y-3">
-              {steps.map((s) => (
-                <li class="flex items-center gap-3">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-700 text-[11px] font-bold text-zinc-500">
-                    {s.num}
-                  </span>
-                  <span class="text-sm text-zinc-500">{s.title}</span>
-                </li>
-              ))}
-            </ul>
+          <!-- Step indicators (desktop only) -->
+          <div class="mt-10 hidden lg:flex lg:flex-col lg:gap-1">
+            {steps.map((s, i) => (
+              <div data-step-indicator={i} class="flex items-center gap-3 rounded-lg px-3 py-2.5">
+                <span class="step-dot flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold">
+                  {s.num}
+                </span>
+                <span class="step-label text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  {s.title}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <!-- RIGHT — scrolling step panels -->
-      <div>
-        {steps.map((step) => (
+      <!-- RIGHT: Step panels -->
+      <div class="relative lg:flex-1" data-steps-container>
+        {steps.map((step, i) => (
           <div
-            class="flex min-h-[60vh] flex-col justify-center border-b border-zinc-800/60 px-0 py-16 last:border-b-0 sm:py-20 lg:min-h-screen lg:px-12 xl:px-20"
-            data-animate="fade-up"
+            data-step-panel
+            class={`border-b border-zinc-200 px-6 py-14 dark:border-zinc-800 sm:px-8 lg:flex lg:items-center lg:border-0 lg:px-16 lg:py-0 xl:px-20 ${i > 0 ? '' : ''}`}
           >
-            <div class="mb-6 flex items-center gap-4">
-              <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10 font-serif text-xl font-bold text-green-400">
-                {step.num}
-              </span>
-              <div class="h-px flex-1 bg-zinc-800" aria-hidden="true"></div>
-            </div>
-
-            <h3 class="font-serif text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
-              {step.title}
-            </h3>
-
-            <p class="mt-5 max-w-lg text-base leading-relaxed text-zinc-400 sm:text-lg">
-              {step.body}
-            </p>
-
-            <div class="mt-8 flex flex-wrap gap-2">
-              {step.tags.map((tag: string) => (
-                <span class="rounded-full border border-zinc-700 px-4 py-1.5 text-xs font-medium text-zinc-400">
-                  {tag}
+            <div class="w-full max-w-xl">
+              <div class="mb-5 flex items-center gap-4">
+                <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 font-serif text-xl font-bold text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                  {step.num}
                 </span>
-              ))}
-            </div>
+                <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></div>
+              </div>
 
-            <!-- Image placeholder -->
-            <div class="mt-10 overflow-hidden rounded-2xl bg-zinc-900">
-              <div class="aspect-[16/10]">
-                <!-- TODO: Replace with step photo — {step.title} in action -->
-                <div class="flex h-full w-full items-center justify-center bg-zinc-900/80">
-                  <span class="font-serif text-6xl text-zinc-800">{step.num}</span>
-                </div>
+              <h3 class="font-serif text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl lg:text-4xl">
+                {step.title}
+              </h3>
+
+              <p class="mt-4 text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg">
+                {step.body}
+              </p>
+
+              <div class="mt-6 flex flex-wrap gap-2">
+                {step.tags.map((tag: string) => (
+                  <span class="rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         ))}
       </div>
+
     </div>
   </section>
 
-  <!-- ════════════════════════════════════════════════════════
-       CAPABILITIES — Asymmetric Bento Grid
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       4. CAPABILITIES — Bento Grid
+       ═══════════════════════════════════════ -->
   <section
     id="capabilities"
-    class="relative bg-white py-24 dark:bg-zinc-950 lg:py-32 xl:py-40"
+    class="bg-white py-24 dark:bg-zinc-950 lg:py-32"
     data-snap
     aria-label="Our Capabilities"
   >
     <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
-      <!-- Header — asymmetric layout -->
-      <div class="mb-16 flex flex-col items-start gap-6 lg:mb-24 lg:flex-row lg:items-end lg:justify-between">
+
+      <div class="mb-14 flex flex-col items-start gap-5 lg:mb-20 lg:flex-row lg:items-end lg:justify-between">
         <div data-animate="fade-up">
-          <span class="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">
-            Capabilities
-          </span>
-          <h2 class="font-serif text-4xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
+          <span class="mb-3 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Capabilities</span>
+          <h2 class="font-serif text-3xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-4xl lg:text-5xl">
             Why Brands<br />Choose Us
           </h2>
         </div>
-        <p class="max-w-md text-base leading-relaxed text-zinc-500 dark:text-zinc-400 lg:text-right lg:text-lg" data-animate="fade-up">
-          Six pillars that define our manufacturing philosophy
-          — and why leading UK &amp; EU retailers trust Reve Stitching.
+        <p class="max-w-md text-base leading-relaxed text-zinc-500 dark:text-zinc-400 lg:text-right" data-animate="fade-up">
+          Six pillars that define how we manufacture — and why
+          UK retailers trust Reve Stitching with their production.
         </p>
       </div>
 
-      <!-- Bento grid (no data-stagger — bento module handles stagger) -->
       <div
-        class="grid auto-rows-[minmax(220px,auto)] grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:auto-rows-[minmax(260px,auto)] lg:grid-cols-3 lg:gap-6"
+        class="grid auto-rows-[minmax(200px,auto)] grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:auto-rows-[minmax(240px,auto)] lg:grid-cols-3 lg:gap-6"
         data-bento
       >
-        <!-- Card 1 — Premium Quality (tall, 2 rows) -->
+        <!-- Card 1: Premium Quality (tall) -->
         <div
-          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-700 to-green-900 p-8 text-white lg:row-span-2 lg:p-10"
+          class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-700 to-green-900 p-8 text-white lg:row-span-2 lg:p-10"
           data-bento-item
-          data-tilt
         >
           <div class="relative z-10 flex h-full flex-col">
-            <span class="mb-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl">✦</span>
+            <span class="mb-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-xl">✦</span>
             <div class="mt-8">
-              <h3 class="text-2xl font-bold lg:text-3xl">{capabilities[0].title}</h3>
-              <p class="mt-3 max-w-sm text-sm leading-relaxed text-white/70 lg:text-base">{capabilities[0].body}</p>
+              <h3 class="text-xl font-bold lg:text-2xl">{capabilities[0].title}</h3>
+              <p class="mt-3 text-sm leading-relaxed text-white/70">{capabilities[0].body}</p>
             </div>
           </div>
-          <div class="pointer-events-none absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-green-500/20 blur-3xl transition-transform duration-700 group-hover:scale-125" aria-hidden="true"></div>
+          <div class="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-green-500/20 blur-3xl" aria-hidden="true"></div>
         </div>
 
-        <!-- Card 2 — Fast Turnaround (wide, 2 cols) -->
-        <div
-          class="group relative overflow-hidden rounded-3xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:col-span-2 lg:p-10"
-          data-bento-item
-          data-tilt
-        >
-          <div class="relative z-10 flex h-full flex-col justify-between sm:flex-row sm:items-end sm:gap-10">
+        <!-- Card 2: Fast Turnaround (wide) -->
+        <div class="group overflow-hidden rounded-2xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:col-span-2 lg:p-10" data-bento-item>
+          <div class="flex h-full flex-col justify-between sm:flex-row sm:items-end sm:gap-8">
             <div>
-              <span class="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-200 text-2xl dark:bg-zinc-800">⚡</span>
-              <h3 class="text-2xl font-bold text-zinc-900 dark:text-white lg:text-3xl">{capabilities[1].title}</h3>
-              <p class="mt-3 max-w-md text-sm leading-relaxed text-zinc-500 dark:text-zinc-400 lg:text-base">{capabilities[1].body}</p>
+              <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200 text-xl dark:bg-zinc-800">⚡</span>
+              <h3 class="text-xl font-bold text-zinc-900 dark:text-white lg:text-2xl">{capabilities[1].title}</h3>
+              <p class="mt-2 max-w-md text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[1].body}</p>
             </div>
-            <span class="mt-4 font-serif text-6xl font-bold text-zinc-200 dark:text-zinc-800 sm:mt-0 sm:text-8xl">
-              25–50
-              <span class="block text-sm font-sans font-normal uppercase tracking-wider text-zinc-400">days</span>
+            <span class="mt-4 font-serif text-5xl font-bold text-zinc-200 dark:text-zinc-800 sm:mt-0 sm:text-7xl">
+              25–50<span class="block text-xs font-sans font-normal uppercase tracking-wider text-zinc-400">days</span>
             </span>
           </div>
         </div>
 
-        <!-- Card 3 — Custom Solutions -->
-        <div class="group overflow-hidden rounded-3xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:p-10" data-bento-item data-tilt>
-          <span class="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-200 text-2xl dark:bg-zinc-800">◈</span>
-          <h3 class="text-xl font-bold text-zinc-900 dark:text-white lg:text-2xl">{capabilities[2].title}</h3>
-          <p class="mt-3 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[2].body}</p>
+        <!-- Card 3: Custom Solutions -->
+        <div class="rounded-2xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:p-10" data-bento-item>
+          <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200 text-xl dark:bg-zinc-800">◈</span>
+          <h3 class="text-lg font-bold text-zinc-900 dark:text-white lg:text-xl">{capabilities[2].title}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[2].body}</p>
         </div>
 
-        <!-- Card 4 — Ethical Production -->
-        <div class="group overflow-hidden rounded-3xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:p-10" data-bento-item data-tilt>
-          <span class="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-200 text-2xl dark:bg-zinc-800">♻</span>
-          <h3 class="text-xl font-bold text-zinc-900 dark:text-white lg:text-2xl">{capabilities[3].title}</h3>
-          <p class="mt-3 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[3].body}</p>
+        <!-- Card 4: Ethical Production -->
+        <div class="rounded-2xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:p-10" data-bento-item>
+          <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200 text-xl dark:bg-zinc-800">♻</span>
+          <h3 class="text-lg font-bold text-zinc-900 dark:text-white lg:text-xl">{capabilities[3].title}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[3].body}</p>
         </div>
 
-        <!-- Card 5 — Global Reach (wide, 2 cols) -->
-        <div
-          class="group relative overflow-hidden rounded-3xl bg-zinc-900 p-8 text-white dark:bg-zinc-800 lg:col-span-2 lg:p-10"
-          data-bento-item
-          data-tilt
-        >
-          <div class="relative z-10 flex h-full flex-col justify-between sm:flex-row sm:items-end sm:gap-10">
+        <!-- Card 5: UK Market Focused (wide) -->
+        <div class="group relative overflow-hidden rounded-2xl bg-zinc-900 p-8 text-white dark:bg-zinc-800 lg:col-span-2 lg:p-10" data-bento-item>
+          <div class="relative z-10 flex h-full flex-col justify-between sm:flex-row sm:items-end sm:gap-8">
             <div>
-              <span class="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl">◎</span>
-              <h3 class="text-2xl font-bold lg:text-3xl">{capabilities[4].title}</h3>
-              <p class="mt-3 max-w-md text-sm leading-relaxed text-white/60 lg:text-base">{capabilities[4].body}</p>
+              <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-xl">◎</span>
+              <h3 class="text-xl font-bold lg:text-2xl">{capabilities[4].title}</h3>
+              <p class="mt-2 max-w-md text-sm leading-relaxed text-white/60">{capabilities[4].body}</p>
             </div>
-            <div class="mt-4 flex gap-3 sm:mt-0" aria-hidden="true">
-              {['UK', 'EU', 'USA'].map((region) => (
-                <span class="flex items-center gap-2 rounded-full border border-white/20 px-4 py-1.5 text-xs text-white/60">
-                  <span class="h-1.5 w-1.5 rounded-full bg-green-400"></span> {region}
-                </span>
-              ))}
+            <div class="mt-4 flex gap-2 sm:mt-0" aria-hidden="true">
+              <span class="flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs text-white/60">
+                <span class="h-1.5 w-1.5 rounded-full bg-green-400"></span> UK
+              </span>
+              <span class="flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs text-white/60">
+                <span class="h-1.5 w-1.5 rounded-full bg-green-400"></span> EU
+              </span>
             </div>
           </div>
-          <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-green-500/10 blur-3xl" aria-hidden="true"></div>
         </div>
 
-        <!-- Card 6 — Tech-Driven -->
-        <div class="group overflow-hidden rounded-3xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:p-10" data-bento-item data-tilt>
-          <span class="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-200 text-2xl dark:bg-zinc-800">⬡</span>
-          <h3 class="text-xl font-bold text-zinc-900 dark:text-white lg:text-2xl">{capabilities[5].title}</h3>
-          <p class="mt-3 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[5].body}</p>
+        <!-- Card 6: Tech-Driven -->
+        <div class="rounded-2xl bg-zinc-100 p-8 dark:bg-zinc-900 lg:p-10" data-bento-item>
+          <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200 text-xl dark:bg-zinc-800">⬡</span>
+          <h3 class="text-lg font-bold text-zinc-900 dark:text-white lg:text-xl">{capabilities[5].title}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{capabilities[5].body}</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ════════════════════════════════════════════════════════
-       STATS — Dark section with animated counters
-       ════════════════════════════════════════════════════════ -->
-  <section
-    id="stats"
-    class="relative overflow-hidden bg-zinc-950 py-24 lg:py-32"
-    data-snap
-    data-cursor-dark
-    aria-label="Key Statistics"
-  >
-    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
-      <div class="absolute left-1/4 top-0 h-[500px] w-[500px] rounded-full bg-green-500/[0.07] blur-[120px]"></div>
-      <div class="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-emerald-500/[0.05] blur-[100px]"></div>
-    </div>
-
-    <div class="relative z-10 mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
-      <div class="mb-16 text-center lg:mb-20" data-animate="fade-up">
-        <span class="text-[11px] font-semibold uppercase tracking-[0.3em] text-green-400">By The Numbers</span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-10 sm:gap-12 lg:grid-cols-4 lg:gap-8" data-stagger="0.12">
-        <!-- Monthly Capacity -->
-        <div class="text-center" data-animate="fade-up">
-          <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10">
-            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-            </svg>
-          </div>
-          <div class="font-serif text-5xl font-bold text-white sm:text-6xl lg:text-7xl">
-            <span data-counter="300000">0</span><span class="text-green-400">+</span>
-          </div>
-          <p class="mt-3 text-sm font-medium uppercase tracking-wider text-zinc-500">Monthly Capacity</p>
-        </div>
-
-        <!-- Lead Time -->
-        <div class="text-center" data-animate="fade-up">
-          <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10">
-            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div class="font-serif text-5xl font-bold text-white sm:text-6xl lg:text-7xl">
-            <span data-counter="25">0</span>–<span data-counter="50">0</span>
-          </div>
-          <p class="mt-3 text-sm font-medium uppercase tracking-wider text-zinc-500">Days Lead Time</p>
-        </div>
-
-        <!-- Export Oriented -->
-        <div class="text-center" data-animate="fade-up">
-          <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10">
-            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.919 17.919 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-            </svg>
-          </div>
-          <div class="font-serif text-5xl font-bold text-white sm:text-6xl lg:text-7xl">
-            <span data-counter="100">0</span><span class="text-green-400">%</span>
-          </div>
-          <p class="mt-3 text-sm font-medium uppercase tracking-wider text-zinc-500">Export Oriented</p>
-        </div>
-
-        <!-- Experience -->
-        <div class="text-center" data-animate="fade-up">
-          <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10">
-            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-            </svg>
-          </div>
-          <div class="font-serif text-5xl font-bold text-white sm:text-6xl lg:text-7xl">
-            <span data-counter="10">0</span><span class="text-green-400">+</span>
-          </div>
-          <p class="mt-3 text-sm font-medium uppercase tracking-wider text-zinc-500">Years Experience</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ════════════════════════════════════════════════════════
-       PRODUCTS — Horizontal pinned scroll
-       Desktop: cards scroll horizontally. Mobile: stacked.
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       5. PRODUCTS — Clean grid
+       ═══════════════════════════════════════ -->
   <section
     id="products"
-    class="relative bg-white dark:bg-zinc-950"
+    class="bg-zinc-50 py-24 dark:bg-zinc-900 lg:py-32"
     data-snap
     aria-label="Product Categories"
   >
-    <div class="mx-auto max-w-[90rem] px-6 pt-24 sm:px-8 lg:px-12 lg:pt-32 xl:px-16">
-      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" data-animate="fade-up">
-        <div>
-          <span class="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Product Range</span>
-          <h2 class="font-serif text-4xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
-            What We<br />Manufacture
+    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+
+      <div class="mb-14 flex flex-col gap-5 lg:mb-20 lg:flex-row lg:items-end lg:justify-between">
+        <div data-animate="fade-up">
+          <span class="mb-3 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Product Range</span>
+          <h2 class="font-serif text-3xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-4xl lg:text-5xl">
+            What We Manufacture
           </h2>
         </div>
-        <a href="/products/" class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300" data-magnetic>
+        <a href="/products/" class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-green-600 transition-colors hover:text-green-700 dark:text-green-400" data-magnetic>
           View All Products
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         </a>
       </div>
-    </div>
 
-    <div class="mt-12 lg:mt-16" data-horizontal-scroll>
-      <div class="flex flex-col gap-6 px-6 pb-24 sm:px-8 lg:flex-row lg:gap-8 lg:px-12 lg:pb-32 xl:px-16" data-horizontal-track>
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" data-stagger="0.08">
         {products.map((product, i) => (
           <a
             href="/products/"
-            class="group relative block flex-shrink-0 overflow-hidden rounded-3xl lg:w-[420px] xl:w-[480px]"
-            data-tilt
+            class="group relative block overflow-hidden rounded-2xl bg-zinc-200 dark:bg-zinc-800"
+            data-animate="fade-up"
           >
-            <div class="aspect-[4/5] overflow-hidden bg-zinc-100 dark:bg-zinc-900">
-              <!-- TODO: Replace with {product.name} product photo -->
-              <div class="flex h-full w-full items-center justify-center bg-zinc-100 transition-transform duration-700 group-hover:scale-105 dark:bg-zinc-900">
-                <span class="font-serif text-4xl text-zinc-300 dark:text-zinc-700">
+            <div class="aspect-[4/5] overflow-hidden">
+              <!-- TODO: Replace with {product.name} photo -->
+              <div class="flex h-full w-full items-center justify-center transition-transform duration-500 group-hover:scale-105">
+                <span class="font-serif text-5xl text-zinc-300 dark:text-zinc-700">
                   {String(i + 1).padStart(2, '0')}
                 </span>
               </div>
             </div>
-            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent"></div>
-            <div class="absolute inset-x-0 bottom-0 p-8">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-900/70 via-transparent to-transparent"></div>
+            <div class="absolute inset-x-0 bottom-0 p-6">
               <div class="flex items-end justify-between">
-                <div>
-                  <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.25em] text-green-400">Category</span>
-                  <h3 class="text-2xl font-bold text-white lg:text-3xl">{product.name}</h3>
-                </div>
-                <span class="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition-all duration-300 group-hover:border-green-400 group-hover:bg-green-500 group-hover:text-zinc-950">
-                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-                  </svg>
+                <h3 class="text-lg font-bold text-white sm:text-xl">{product.name}</h3>
+                <span class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition-all duration-300 group-hover:border-green-400 group-hover:bg-green-500 group-hover:text-zinc-950">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/></svg>
                 </span>
               </div>
             </div>
@@ -589,187 +455,138 @@ const clients = [
     </div>
   </section>
 
-  <!-- ════════════════════════════════════════════════════════
-       CLIENTS — Marquee logos + testimonial
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       6. CLIENTS — Marquee logos
+       ═══════════════════════════════════════ -->
   <section
     id="clients"
-    class="relative overflow-hidden bg-zinc-50 py-24 dark:bg-zinc-900 lg:py-32"
+    class="overflow-hidden bg-white py-20 dark:bg-zinc-950 lg:py-24"
     data-snap
     aria-label="Our Clients"
   >
     <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
-      <div class="mb-16 text-center lg:mb-20" data-animate="fade-up">
-        <span class="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Trusted By</span>
-        <h2 class="font-serif text-4xl font-bold text-zinc-900 dark:text-white sm:text-5xl">Leading Retailers</h2>
+      <div class="mb-12 text-center" data-animate="fade-up">
+        <span class="mb-3 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Our Clients</span>
+        <h2 class="font-serif text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl">
+          Trusted by UK Retailers
+        </h2>
       </div>
     </div>
 
-    <!-- Marquee -->
-    <div class="relative mb-20 lg:mb-24" data-animate="fade-up">
-      <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-zinc-50 dark:from-zinc-900 sm:w-32"></div>
-      <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-zinc-50 dark:from-zinc-900 sm:w-32"></div>
+    <div class="relative" data-animate="fade-up">
+      <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white dark:from-zinc-950 sm:w-32"></div>
+      <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white dark:from-zinc-950 sm:w-32"></div>
 
       <div class="marquee-container flex">
         <div class="marquee-track flex shrink-0 items-center gap-16 pr-16">
           {clients.map((client) => (
-            <div class="flex h-16 w-36 items-center justify-center">
-              <!-- TODO: Replace with {client} logo (monochrome SVG) -->
-              <span class="text-lg font-bold text-zinc-400 dark:text-zinc-500">{client}</span>
+            <div class="flex h-14 w-32 items-center justify-center">
+              <span class="text-base font-bold text-zinc-300 dark:text-zinc-600">{client}</span>
             </div>
           ))}
         </div>
         <div class="marquee-track flex shrink-0 items-center gap-16 pr-16" aria-hidden="true">
           {clients.map((client) => (
-            <div class="flex h-16 w-36 items-center justify-center">
-              <span class="text-lg font-bold text-zinc-400 dark:text-zinc-500">{client}</span>
+            <div class="flex h-14 w-32 items-center justify-center">
+              <span class="text-base font-bold text-zinc-300 dark:text-zinc-600">{client}</span>
             </div>
           ))}
         </div>
       </div>
     </div>
-
-    <!-- Testimonial -->
-    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
-      <div class="mx-auto max-w-4xl text-center" data-parallax="0.15" data-animate="fade-up">
-        <span class="mx-auto mb-8 block font-serif text-8xl leading-none text-green-500/20 dark:text-green-400/10" aria-hidden="true">"</span>
-        <blockquote>
-          <p class="font-serif text-2xl font-medium leading-relaxed text-zinc-800 dark:text-zinc-200 sm:text-3xl lg:text-4xl">
-            Reve Stitching has been an exceptional manufacturing partner. Their
-            attention to detail, speed, and consistent quality across large
-            orders is truly world-class.
-          </p>
-          <footer class="mt-10">
-            <div class="flex items-center justify-center gap-4">
-              <div class="h-12 w-12 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <!-- TODO: Client contact photo -->
-              </div>
-              <div class="text-left">
-                <cite class="block text-sm font-bold not-italic text-zinc-900 dark:text-white">Sourcing Director</cite>
-                <span class="text-sm text-zinc-500 dark:text-zinc-400">Leading UK Retailer</span>
-              </div>
-            </div>
-          </footer>
-        </blockquote>
-      </div>
-    </div>
   </section>
 
-  <!-- ════════════════════════════════════════════════════════
-       PRICE CALCULATOR
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       7. CALCULATOR — PriceCalculator embed
+       ═══════════════════════════════════════ -->
   <section
     id="calculator"
-    class="relative overflow-hidden bg-white py-24 dark:bg-zinc-950 lg:py-32"
+    class="bg-zinc-50 py-24 dark:bg-zinc-900 lg:py-32"
     data-snap
     aria-label="Price Calculator"
   >
-    <div class="pointer-events-none absolute -right-20 top-20 h-72 w-72 rounded-full bg-green-500/[0.06] blur-[80px]" data-float aria-hidden="true"></div>
-    <div class="pointer-events-none absolute -left-20 bottom-20 h-60 w-60 rounded-full bg-emerald-400/[0.05] blur-[80px]" data-float data-float-amplitude="10" data-float-duration="5.5" aria-hidden="true"></div>
-
-    <div class="relative z-10 mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
-      <div class="mb-14 max-w-2xl lg:mb-20" data-animate="fade-up">
-        <span class="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Instant Estimate</span>
-        <h2 class="font-serif text-4xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
-          Get a Quick<br />Price Estimate
+    <div class="mx-auto max-w-[90rem] px-6 sm:px-8 lg:px-12 xl:px-16">
+      <div class="mb-12 max-w-2xl lg:mb-16" data-animate="fade-up">
+        <span class="mb-3 inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">Instant Estimate</span>
+        <h2 class="font-serif text-3xl font-bold leading-tight text-zinc-900 dark:text-white sm:text-4xl lg:text-5xl">
+          Get a Quick Price Estimate
         </h2>
-        <p class="mt-6 text-lg leading-relaxed text-zinc-500 dark:text-zinc-400">
+        <p class="mt-4 text-base leading-relaxed text-zinc-500 dark:text-zinc-400 sm:text-lg">
           Use our interactive calculator for an instant ballpark quote.
-          For a detailed, binding quotation, reach out to our sales team.
+          For a detailed quotation, reach out to our sales team.
         </p>
       </div>
 
-      <div class="relative overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 p-6 shadow-xl shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none sm:p-8 lg:p-10" data-animate="fade-up">
+      <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-none sm:p-8" data-animate="fade-up">
         <PriceCalculator />
       </div>
     </div>
   </section>
 
-  <!-- ════════════════════════════════════════════════════════
-       CTA — Cinematic fullscreen closer
-       ════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       8. CTA — Dark cinematic closer
+       ═══════════════════════════════════════ -->
   <section
     id="cta"
-    class="relative flex min-h-[80vh] items-center overflow-hidden bg-zinc-950 py-24 lg:min-h-screen lg:py-32"
+    class="relative flex min-h-[70vh] items-center overflow-hidden bg-zinc-950 py-24 lg:min-h-[80vh] lg:py-32"
     data-snap
     data-cta-section
     data-cursor-dark
     aria-label="Call to Action"
   >
     <div class="pointer-events-none absolute inset-0" aria-hidden="true">
-      <div class="absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500/[0.08] blur-[150px]"></div>
-      <div class="absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-emerald-600/[0.06] blur-[120px]"></div>
-      <div class="absolute right-0 top-0 h-[300px] w-[300px] rounded-full bg-green-400/[0.05] blur-[100px]"></div>
+      <div class="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500/[0.07] blur-[120px]"></div>
     </div>
 
-    <div class="pointer-events-none absolute inset-0 opacity-[0.03]" aria-hidden="true"
-      style="background-image:linear-gradient(rgba(255,255,255,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.1) 1px,transparent 1px);background-size:60px 60px"
-    ></div>
-
-    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-green-500/40 to-transparent" aria-hidden="true"></div>
+    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent" aria-hidden="true"></div>
 
     <div class="relative z-10 mx-auto w-full max-w-[90rem] px-6 text-center sm:px-8 lg:px-12 xl:px-16">
-      <div class="mb-8 lg:mb-12" data-animate="fade-up">
+
+      <div class="mb-8" data-animate="fade-up">
         <span class="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-green-400">
           <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400"></span>
           Ready to Start
         </span>
       </div>
 
-      <!-- Line-split heading (data-cta-title inside data-cta-section) -->
-      <h2 data-cta-title class="font-serif font-bold leading-[0.9] tracking-tight text-white" style="font-size:clamp(2.5rem,7vw,8rem)">
-        Let's Build a Successful Partnership
+      <h2 data-cta-title class="font-serif font-bold leading-[0.9] tracking-tight text-white" style="font-size:clamp(2.25rem,6vw,7rem)">
+        Let's Build Something Great Together
       </h2>
 
-      <p class="mx-auto mt-8 max-w-lg text-lg leading-relaxed text-zinc-400 sm:text-xl lg:mt-10" data-animate="fade-up">
+      <p class="mx-auto mt-8 max-w-lg text-lg leading-relaxed text-zinc-400" data-animate="fade-up">
         Get a detailed, no-obligation quote within 24 hours.
         Our team is ready to bring your vision to life.
       </p>
 
-      <div class="mt-12 flex flex-col items-center justify-center gap-5 sm:flex-row lg:mt-14" data-animate="fade-up">
+      <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:mt-12" data-animate="fade-up">
         <a
           href="/quote/"
-          class="inline-flex items-center gap-3 rounded-full bg-green-500 px-10 py-5 text-base font-bold uppercase tracking-wider text-zinc-950 shadow-2xl shadow-green-500/25 transition-all duration-300 hover:bg-green-400 hover:shadow-green-400/30"
+          class="inline-flex items-center gap-3 rounded-full bg-green-500 px-10 py-5 text-sm font-bold uppercase tracking-wider text-zinc-950 shadow-2xl shadow-green-500/20 transition-all duration-300 hover:bg-green-400"
           data-cta-button
           data-magnetic
         >
           Get Your Free Quote
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         </a>
         <a
           href="tel:+923329555786"
-          class="inline-flex items-center gap-3 rounded-full border border-zinc-700 px-8 py-5 text-base font-medium text-zinc-300 transition-all duration-300 hover:border-zinc-500 hover:text-white"
+          class="inline-flex items-center gap-3 rounded-full border border-zinc-700 px-8 py-5 text-sm font-medium text-zinc-300 transition-all duration-300 hover:border-zinc-500 hover:text-white"
         >
-          <svg class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-          </svg>
-          Or Call Us Directly
+          <svg class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+          Or Call Us
         </a>
       </div>
-
-      <p class="mt-10 text-sm text-zinc-600" data-animate="fade-up">
-        Trusted by brands in 8+ countries · No commitment required · Response within 24 hours
-      </p>
     </div>
   </section>
 
 </Layout>
 
-<!-- Marquee animation (CSS only, no JS needed) -->
 <style is:global>
-  .marquee-container {
-    overflow: hidden;
-  }
-  .marquee-track {
-    animation: marquee 30s linear infinite;
-  }
+  .marquee-container { overflow: hidden; }
+  .marquee-track { animation: marquee 30s linear infinite; }
   @keyframes marquee {
     from { transform: translateX(0); }
-    to   { transform: translateX(-100%); }
+    to { transform: translateX(-100%); }
   }
-  .marquee-container:hover .marquee-track {
-    animation-play-state: paused;
-  }
+  .marquee-container:hover .marquee-track { animation-play-state: paused; }
 </style>
